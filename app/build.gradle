@@ -1,10 +1,8 @@
-import com.google.gms.googleservices.GoogleServicesPlugin
 
 apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
     flavorDimensions "default"
 
     compileOptions {
@@ -26,6 +24,13 @@ android {
         exclude 'lib/x86_64/darwin/libscrypt.dylib'
     }
 
+    // The prebuilt FFmpegKit package is used only for the ARM64 debug trial.
+    variantFilter { variant ->
+        if (variant.buildType.name != 'debug' || !variant.flavors.any { it.name == '__64bit' }) {
+            variant.ignore = true
+        }
+    }
+
     productFlavors {
         __32bit {
             versionCode android.defaultConfig.versionCode * 10 + 1
@@ -34,6 +39,9 @@ android {
             }
         }
         __64bit {
+            minSdkVersion 24
+            // Refresh the extracted SDK code when installing over an earlier debug APK.
+            resValue 'string', 'private_version', '0.102.0-android-wallet-hub-1'
             versionCode android.defaultConfig.versionCode * 10 + 2
             ndk {
                 abiFilter "arm64-v8a"
@@ -72,6 +80,27 @@ configurations {
     }
 }
 
+def androidSdk64 = 'io.lbry:lbrysdk64:0.102.0'
+def walletSdkArchive = configurations.create('walletSdkArchive') {
+    canBeConsumed = false
+    transitive = false
+}
+def patchedSdkAssets = layout.buildDirectory.dir('generated/lbrySdkAssets')
+def sdkPatchScript = rootProject.file('scripts/patch-android-sdk.py')
+
+def patchWalletSdk = tasks.register('patchWalletSdk', Exec) {
+    inputs.file(sdkPatchScript)
+    inputs.files(walletSdkArchive)
+    outputs.dir(patchedSdkAssets)
+    doFirst {
+        commandLine 'python3', sdkPatchScript, walletSdkArchive.singleFile,
+                patchedSdkAssets.get().file('private.mp3').asFile
+    }
+}
+
+android.sourceSets.__64bit.assets.srcDir(patchedSdkAssets)
+tasks.named('preBuild').configure { dependsOn(patchWalletSdk) }
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
@@ -103,20 +132,22 @@ dependencies {
     implementation 'com.android.billingclient:billing:3.0.2'
 
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.12.2'
-    implementation 'com.google.android.exoplayer:exoplayer-dash:2.12.2'
-    implementation 'com.google.android.exoplayer:exoplayer-ui:2.12.2'
-    implementation 'com.google.android.exoplayer:extension-cast:2.12.2'
-    implementation 'com.google.android.exoplayer:extension-mediasession:2.12.2'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.13.3'
+    implementation 'com.google.android.exoplayer:exoplayer-dash:2.13.3'
+    implementation 'com.google.android.exoplayer:exoplayer-hls:2.13.3'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.13.3'
+    implementation 'com.google.android.exoplayer:extension-cast:2.13.3'
+    implementation 'com.google.android.exoplayer:extension-mediasession:2.13.3'
 
-    implementation 'com.google.android:flexbox:2.0.1'
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
 
-    implementation 'com.hbb20:ccp:2.3.8'
+    implementation 'com.github.hbb20:countrycodepickerproject:v2.7.0'
 
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'com.atlassian.commonmark:commonmark:0.14.0'
 
-    implementation 'com.arthenica:mobile-ffmpeg-full-gpl:4.3.1.LTS'
+    implementation 'dev.ffmpegkit-maintained:ffmpeg-kit-full-gpl:7.1.6'
+    runtimeOnly 'com.arthenica:smart-exception-java:0.2.1'
 
     implementation 'commons-codec:commons-codec:1.15'
     implementation 'org.bitcoinj:bitcoinj-tools:0.14.7'
@@ -136,9 +167,9 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
     __32bitImplementation 'io.lbry:lbrysdk32:0.102.0'
-    __64bitImplementation 'io.lbry:lbrysdk64:0.102.0'
+    __64bitImplementation androidSdk64
+    add('walletSdkArchive', "${androidSdk64}@aar")
     //__64bitImplementation(name: 'lbrysdk', ext: 'aar')
 }
 
 apply plugin: 'com.google.gms.google-services'
-GoogleServicesPlugin.config.disableVersionCheck = true

@@ -18,6 +18,7 @@ import android.text.TextWatcher;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.util.Base64;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -56,6 +57,8 @@ import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultControlDispatcher;
 import com.google.android.exoplayer2.ParserException;
 import com.google.android.exoplayer2.PlaybackParameters;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioAttributes;
@@ -63,9 +66,13 @@ import com.google.android.exoplayer2.database.ExoDatabaseProvider;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
 import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException;
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
 import com.google.android.exoplayer2.upstream.Loader;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
@@ -106,7 +113,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
+
 import io.lbry.browser.MainActivity;
+import io.lbry.browser.BuildConfig;
 import io.lbry.browser.R;
 import io.lbry.browser.adapter.ClaimListAdapter;
 import io.lbry.browser.adapter.CommentListAdapter;
@@ -354,6 +368,17 @@ public class FileViewFragment extends BaseFragment implements
                     showBuffering();
                 } else {
                     hideBuffering();
+                }
+            }
+
+            @Override
+            public void onPlayerError(ExoPlaybackException error) {
+                View view = getView();
+                if (view != null && claim != null && claim == MainActivity.nowPlayingClaim
+                        && error.type == ExoPlaybackException.TYPE_SOURCE
+                        && isRateLimited(error.getSourceException())) {
+                    hideBuffering();
+                    Snackbar.make(view, R.string.playback_rate_limited, Snackbar.LENGTH_LONG).show();
                 }
             }
 
@@ -1823,17 +1848,87 @@ public class FileViewFragment extends BaseFragment implements
                 }
 
                 MainActivity.appPlayer.setPlayWhenReady(Objects.requireNonNull((MainActivity) (getActivity())).isMediaAutoplayEnabled());
-                String userAgent = Util.getUserAgent(context, getString(R.string.app_name));
-                String mediaSourceUrl = getStreamingUrl();
-                MediaSource mediaSource = new ProgressiveMediaSource.Factory(
-                        new CacheDataSourceFactory(MainActivity.playerCache, new DefaultDataSourceFactory(context, userAgent)),
-                        new DefaultExtractorsFactory()
-                ).setLoadErrorHandlingPolicy(new StreamLoadErrorPolicy()).createMediaSource(Uri.parse(mediaSourceUrl));
-
-                MainActivity.appPlayer.setMediaSource(mediaSource, true);
-                MainActivity.appPlayer.prepare();
+                String streamUrl = getStreamingUrl();
+                preparePlayback(context, claim, streamUrl, streamUrl.equals(buildLbryTvStreamingUrl()));
             }
         }
+    }
+
+    static void preparePlayback(Context context, Claim claim, String streamUrl, boolean legacyStream) {
+        SimpleExoPlayer player = MainActivity.appPlayer;
+        Uri fallback = Uri.parse(streamUrl);
+        if (context instanceof MainActivity && legacyStream && claim.isFree() && !Lbryio.isSignedIn()) {
+            AsyncTask.execute(() -> {
+                Uri publicStream = resolvePublicStream(claim);
+                ((MainActivity) context).runOnUiThread(() -> {
+                    if (MainActivity.appPlayer == player && MainActivity.nowPlayingClaim == claim) {
+                        prepareStream(context, player, publicStream != null ? publicStream : fallback);
+                    }
+                });
+            });
+        } else {
+            prepareStream(context, player, fallback);
+        }
+    }
+
+    private static final OkHttpClient PUBLIC_STREAM_CLIENT = new OkHttpClient.Builder()
+            .callTimeout(12, TimeUnit.SECONDS)
+            .followRedirects(false)
+            .build();
+
+    private static Uri resolvePublicStream(Claim claim) {
+        try {
+            JSONObject params = new JSONObject().put("uri",
+                    "lbry://" + claim.getName() + "#" + claim.getClaimId());
+            JSONObject payload = new JSONObject().put("method", "get").put("params", params);
+            Request request = new Request.Builder()
+                    .url("https://api.lbry.tv/api/v1/proxy?m=get")
+                    .post(RequestBody.create(payload.toString(), Helper.JSON_MEDIA_TYPE))
+                    .build();
+            try (Response response = PUBLIC_STREAM_CLIENT.newCall(request).execute()) {
+                ResponseBody body = response.body();
+                if (response.isSuccessful() && body != null) {
+                    JSONObject result = new JSONObject(body.string()).optJSONObject("result");
+                    if (result != null) {
+                        Uri stream = Uri.parse(result.optString("streaming_url"));
+                        if ("https".equals(stream.getScheme()) && "player.odycdn.com".equals(stream.getAuthority())) {
+                            return stream;
+                        }
+                    }
+                }
+            }
+        } catch (IOException | JSONException exception) {
+            if (BuildConfig.DEBUG) {
+                Log.d("LbryPlaybackProbe", "Public lookup failed: " + exception.getClass().getSimpleName());
+            }
+        }
+        return null;
+    }
+
+    private static void prepareStream(Context context, SimpleExoPlayer player, Uri mediaUri) {
+        if (BuildConfig.DEBUG) {
+            Log.d("LbryPlaybackProbe", "Selected stream host: " + mediaUri.getHost());
+        }
+        String userAgent = Util.getUserAgent(context, context.getString(R.string.app_name));
+        DefaultHttpDataSourceFactory httpFactory = new DefaultHttpDataSourceFactory(userAgent);
+        if ("https".equals(mediaUri.getScheme()) && "player.odycdn.com".equals(mediaUri.getAuthority())) {
+            httpFactory.getDefaultRequestProperties().set("Referer", "https://odysee.com/");
+        }
+        CacheDataSourceFactory dataSource = new CacheDataSourceFactory(
+                MainActivity.playerCache, new DefaultDataSourceFactory(context, httpFactory));
+        player.setMediaSource(createStreamSource(mediaUri, dataSource), true);
+        player.prepare();
+    }
+
+    static MediaSource createStreamSource(Uri mediaUri, DataSource.Factory dataSource) {
+        StreamLoadErrorPolicy errorPolicy = new StreamLoadErrorPolicy();
+        if (Util.inferContentType(mediaUri) == C.TYPE_HLS) {
+            return new HlsMediaSource.Factory(dataSource)
+                    .setLoadErrorHandlingPolicy(errorPolicy)
+                    .createMediaSource(MediaItem.fromUri(mediaUri));
+        }
+        return new ProgressiveMediaSource.Factory(dataSource, new DefaultExtractorsFactory())
+                .setLoadErrorHandlingPolicy(errorPolicy).createMediaSource(mediaUri);
     }
 
     private void setCurrentPlayer(Player currentPlayer) {
@@ -3039,10 +3134,26 @@ public class FileViewFragment extends BaseFragment implements
         }
     }
 
+    private static boolean isRateLimited(IOException exception) {
+        return exception instanceof InvalidResponseCodeException
+                && ((InvalidResponseCodeException) exception).responseCode == 429;
+    }
+
     public static class StreamLoadErrorPolicy extends DefaultLoadErrorHandlingPolicy {
         @Override
-        public long getRetryDelayMsFor(int dataType, long loadDurationMs, IOException exception, int errorCount) {
-            return exception instanceof ParserException
+        public long getRetryDelayMsFor(LoadErrorInfo loadErrorInfo) {
+            IOException exception = loadErrorInfo.exception;
+            int errorCount = loadErrorInfo.errorCount;
+            if (BuildConfig.DEBUG && errorCount == 1) {
+                Throwable cause = exception;
+                while (cause.getCause() != null && cause.getCause() != cause) {
+                    cause = cause.getCause();
+                }
+                Log.d("LbryPlaybackProbe", "Load failed: " + exception.getClass().getSimpleName()
+                        + ", cause: " + cause.getClass().getSimpleName());
+            }
+            return isRateLimited(exception)
+                    || exception instanceof ParserException
                     || exception instanceof FileNotFoundException
                     || exception instanceof Loader.UnexpectedLoaderException
                     ? C.TIME_UNSET

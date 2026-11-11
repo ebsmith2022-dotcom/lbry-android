@@ -25,15 +25,9 @@ import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.audio.AudioAttributes;
 import com.google.android.exoplayer2.database.ExoDatabaseProvider;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.ui.PlayerView;
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
-import com.google.android.exoplayer2.util.Util;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -495,14 +489,7 @@ public class ShuffleFragment extends BaseFragment {
                 }
 
                 MainActivity.appPlayer.setPlayWhenReady(true);
-                String userAgent = Util.getUserAgent(context, getString(R.string.app_name));
-                String mediaSourceUrl = getStreamingUrl();
-                MediaSource mediaSource = new ProgressiveMediaSource.Factory(
-                        new CacheDataSourceFactory(MainActivity.playerCache, new DefaultDataSourceFactory(context, userAgent)),
-                        new DefaultExtractorsFactory()
-                ).setLoadErrorHandlingPolicy(new FileViewFragment.StreamLoadErrorPolicy()).createMediaSource(Uri.parse(mediaSourceUrl));
-
-                MainActivity.appPlayer.prepare(mediaSource, true, true);
+                FileViewFragment.preparePlayback(context, current, getStreamingUrl(), true);
             }
         }
     }

@@ -30,12 +30,12 @@ import androidx.cardview.widget.CardView;
 import androidx.core.widget.NestedScrollView;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.arthenica.mobileffmpeg.Config;
-import com.arthenica.mobileffmpeg.FFmpeg;
-import com.arthenica.mobileffmpeg.FFprobe;
-
-import com.arthenica.mobileffmpeg.Statistics;
-import com.arthenica.mobileffmpeg.StatisticsCallback;
+import com.arthenica.ffmpegkit.FFmpegKit;
+import com.arthenica.ffmpegkit.FFmpegKitConfig;
+import com.arthenica.ffmpegkit.FFmpegSession;
+import com.arthenica.ffmpegkit.FFprobeKit;
+import com.arthenica.ffmpegkit.FFprobeSession;
+import com.arthenica.ffmpegkit.ReturnCode;
 import com.bumptech.glide.Glide;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.android.material.button.MaterialButton;
@@ -410,7 +410,7 @@ public class PublishFormFragment extends BaseFragment implements
             public void onClick(View view) {
                 if (transcodeInProgress) {
                     // show alert confirming the user is sure, and then cancel
-                    FFmpeg.cancel();
+                    FFmpegKit.cancel();
                     transcodeInProgress = false;
                 }
 
@@ -516,7 +516,7 @@ public class PublishFormFragment extends BaseFragment implements
                 activity.removeFilePickerListener(this);
                 activity.removeNavFragment(PublishFormFragment.class, NavMenuItem.ID_ITEM_NEW_PUBLISH);
                 if (transcodeInProgress) {
-                    FFmpeg.cancel();
+                    FFmpegKit.cancel();
                 }
             }
         }
@@ -1357,9 +1357,12 @@ public class PublishFormFragment extends BaseFragment implements
         }
         protected VideoInformation doInBackground(Void... params) {
             try {
-                int code = FFprobe.execute(String.format("-v quiet -show_streams -select_streams v -print_format json -i \"%s\"", filePath));
-                if (code == Config.RETURN_CODE_SUCCESS) {
-                    String json = Config.getLastCommandOutput();
+                FFprobeSession session = FFprobeKit.executeWithArguments(new String[] {
+                        "-v", "quiet", "-show_streams", "-select_streams", "v",
+                        "-print_format", "json", "-i", filePath
+                });
+                if (ReturnCode.isSuccess(session.getReturnCode())) {
+                    String json = session.getOutput();
                     JSONObject result = new JSONObject(json);
                     if (result.has("streams")) {
                         JSONArray streams = result.getJSONArray("streams");
@@ -1414,14 +1417,10 @@ public class PublishFormFragment extends BaseFragment implements
                     "-maxrate 5000K -bufsize 5000K " +
                     "-movflags +faststart \"%s\"", filePath, scaleFlag, outputFilePath) : movFlagsCommand;
 
-            Config.enableStatisticsCallback(new StatisticsCallback() {
-                @Override
-                public void apply(Statistics statistics) {
-                    publishProgress(statistics.getTime());
-                }
-            });
-            int code = FFmpeg.execute(command);
-            return code == Config.RETURN_CODE_SUCCESS;
+            FFmpegSession session = FFmpegSession.create(FFmpegKitConfig.parseArguments(command),
+                    null, null, statistics -> publishProgress((int) statistics.getTime()));
+            FFmpegKitConfig.ffmpegExecute(session);
+            return ReturnCode.isSuccess(session.getReturnCode());
         }
 
         protected void onProgressUpdate(Integer... times) {
