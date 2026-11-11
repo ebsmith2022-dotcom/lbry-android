@@ -339,7 +339,6 @@
     <string name="confirm_unlock_tips">Da li ste sigurni da želite da otključate sve vaše tipove?</string>
     <string name="min_spend_required">Molimo vas da unesete veći iznos od 0,0001 kredita.</string>
 
-    <string name="buy_lbc">Kupi LBRY kredite</string>
     <string name="hash_not_supported">Vaš uređjaj ne ispunjava minimalne uslove da bi vaše zahteve za kupovinu održavao bezbednim. </string>
     <string name="receive_address_not_set">Nemate podešenu adresu novčanika. Molimo vas da napravite novu i da pokušate ponovo.</string>
 

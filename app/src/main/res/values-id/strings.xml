@@ -323,7 +323,6 @@
     <string name="confirm_unlock_tips">Yakin ingin membuka kunci semua tips Anda?</string>
     <string name="min_spend_required">Silakan masukkan jumlah lebih dari 0,0001 kredit.</string>
 
-    <string name="buy_lbc">Beli LBRY Credits</string>
     <string name="hash_not_supported">Perangkat Anda tidak mendukung persyaratan minimum untuk mengamankan permintaan pembelian Anda.</string>
     <string name="receive_address_not_set">Anda tidak memiliki set alamat dompet. Harap buat alamat baru dan coba lagi.</string>
 

@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">Voulez-vous vraiment déverrouiller tous vos conseils?</string>
     <string name="min_spend_required">Veuillez saisir un montant supérieur à 0,0001 crédit.</string>
 
-    <string name="buy_lbc">Acheter des crédits LBRY</string>
     <string name="hash_not_supported">Votre appareil ne prend pas en charge les exigences minimales pour sécuriser votre demande d\'achat.</string>
     <string name="receive_address_not_set">Vous n\'avez pas défini d\'adresse de portefeuille. Veuillez générer une nouvelle adresse et réessayer.</string>
 

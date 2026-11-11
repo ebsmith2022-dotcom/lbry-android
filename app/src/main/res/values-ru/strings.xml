@@ -347,7 +347,6 @@
     <string name="confirm_unlock_tips">Вы уверены, что хотите разблокировать все Ваши чаевые?</string>
     <string name="min_spend_required">Пожалуйста, введите количество кредитов больше 0.0001.</string>
 
-    <string name="buy_lbc">Купить кредиты LBRY</string>
     <string name="hash_not_supported">Ваше устройство не отвечает минимальным требованиям для обеспечения защиты Вашего запроса на покупку.</string>
     <string name="receive_address_not_set">У Вас не настроен адрес кошелька. Пожалуйста, сгенерируйте новый адрес и попробуйте ещё раз.</string>
 

@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">Segur que vols desblocar totes les teves propines?</string>
     <string name="min_spend_required">Sisplau, introdueix una quantitat mínima de 0.0001 crèdits.</string>
 
-    <string name="buy_lbc">Compra crèdits de LBRY</string>
     <string name="hash_not_supported">El teu dispositiu no té suport pels requeriments mínims per assegurar la teva petició de compra.</string>
     <string name="receive_address_not_set">No has especificat cap adreça de cartera. Sisplau, genera\'n una de nova i torna a intentar-ho.</string>
 

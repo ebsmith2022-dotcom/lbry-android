@@ -323,7 +323,6 @@
     <string name="confirm_unlock_tips">你確定要解鎖所有小費嗎？</string>
     <string name="min_spend_required"> 信用額的價位請輸入高於 0.0001。</string>
 
-    <string name="buy_lbc">購買 LBRY 信用額</string>
     <string name="hash_not_supported">你的裝置並未符合執行加密購買請求的最低配備需求。</string>
     <string name="receive_address_not_set">你沒有設定錢包位址。請建立新位址之後再次嘗試。</string>
 

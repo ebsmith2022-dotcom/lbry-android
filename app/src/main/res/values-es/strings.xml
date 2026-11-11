@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">¿Seguro que quieres desbloquear todos tus propinas?</string>
     <string name="min_spend_required">Por favor introduce una cantidad mayor que 0.0001 créditos.</string>
 
-    <string name="buy_lbc">Comprar Créditos LBRY</string>
     <string name="hash_not_supported">Tu dispositivo no cumple con los requerimientos mínimos para realizar una compra segura.</string>
     <string name="receive_address_not_set">No tienes establecida una dirección de billetera. Por favor genera una nueva dirección e intenta de nuevo.</string>
 

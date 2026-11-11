@@ -347,7 +347,6 @@
     <string name="confirm_unlock_tips">Czy na pewno chcesz odblokować wszystkie napiwki?</string>
     <string name="min_spend_required">Podaj kwotę większą niż 0.0001 kredytów.</string>
 
-    <string name="buy_lbc">Kup Kredyty LBC</string>
     <string name="hash_not_supported">Twoje urządzenie nie spełnia minimalnych wymagań dotyczących zabezpieczenia Twojego żądania zakupu.</string>
     <string name="receive_address_not_set">Nie masz ustawionego adresu portfela. Wygeneruj nowy adres i spróbuj ponownie.</string>
 

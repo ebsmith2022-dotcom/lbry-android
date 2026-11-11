@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">Tem certeza de que deseja desbloquear todas as suas dicas?</string>
     <string name="min_spend_required">Digite um valor superior a 0,0001 créditos.</string>
 
-    <string name="buy_lbc">Comprar LBC</string>
     <string name="hash_not_supported">Seu dispositivo não suporta os requisitos mínimos para proteger sua solicitação de compra.</string>
     <string name="receive_address_not_set">Você não tem um endereço de carteira definido. Gere um novo endereço e tente novamente.</string>
 

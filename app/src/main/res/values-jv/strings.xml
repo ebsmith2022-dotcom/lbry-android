@@ -323,7 +323,6 @@
     <string name="confirm_unlock_tips">Apa sampeyan pengin mbukak kunci kabeh tips?</string>
     <string name="min_spend_required">Ketik jumlah luwih saka 0.0001 kridit.</string>
 
-    <string name="buy_lbc">Tuku LBRY Credits</string>
     <string name="hash_not_supported">Piranti sampeyan ora ndhukung syarat minimal kanggo njamin panjalukan sampeyan.</string>
     <string name="receive_address_not_set">Sampeyan ora duwe alamat dompet. Mangga ngasilake alamat anyar lan coba maneh.</string>
 

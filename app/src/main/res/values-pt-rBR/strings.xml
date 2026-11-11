@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">Tem certeza de que deseja liberar todas as suas gorjetas?</string>
     <string name="min_spend_required">Insira um valor superior a 0,0001 créditos.</string>
 
-    <string name="buy_lbc">Comprar LBC</string>
     <string name="hash_not_supported">Seu dispositivo não oferece suporte aos requisitos mínimos para proteger sua solicitação de compra.</string>
     <string name="receive_address_not_set">Você não tem um endereço de carteira definido. Por favor, gere um novo endereço e tente novamente.</string>
 

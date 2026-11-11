@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">क्या आप निश्चित रूप से अपनी सारी टिप्स खोलना चाहते हैं?</string>
     <string name="min_spend_required"> 0.0001 क्रेडिटस से अधिक मूल्य को दर्ज करें।</string>
 
-    <string name="buy_lbc">LBRY क्रेडिट खरीदें</string>
     <string name="hash_not_supported">आपका डिवाइस आपके खरीदारी अनुरोध को हासिल करने के लिए न्यूनतम आवश्यकताओं का समर्थन नहीं करता है।</string>
     <string name="receive_address_not_set">आपके पास एक वॉलेट पता सेट नहीं है। कृपया एक नया पता जेनरेट करें और पुनः प्रयास करें।</string>
 

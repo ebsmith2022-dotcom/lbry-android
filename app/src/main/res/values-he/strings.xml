@@ -347,7 +347,6 @@
     <string name="confirm_unlock_tips">האם אתה בטוח שברצונך לשחרר את כל הטיפים שלך?</string>
     <string name="min_spend_required">אנא הזן סכום הגדול מ-0.0001 קרדיט.</string>
 
-    <string name="buy_lbc">קנה קרדיט LBRY</string>
     <string name="hash_not_supported">מכשירך לא עומד בדרישות המינימום להבטחת בקשת הרכישה.</string>
     <string name="receive_address_not_set">אין לך עדיין כתובת ארנק. אנא צור כתובת חדשה ונסה שנית.</string>
 

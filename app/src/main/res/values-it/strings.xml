@@ -331,7 +331,6 @@
     <string name="confirm_unlock_tips">Sei sicuro di voler sbloccare tutti i tuoi donaziones?</string>
     <string name="min_spend_required">Inserire un valore superiore a 0.0001 crediti.</string>
 
-    <string name="buy_lbc">Acquista crediti LBRY</string>
     <string name="hash_not_supported">Il tuo device non supporta i requisiti minimi per garantire un acquisto sicuro.</string>
     <string name="receive_address_not_set">Non hai impostato un indirizzo del portafoglio. Rigenera un nuovo indirizzo e riprova.</string>
 

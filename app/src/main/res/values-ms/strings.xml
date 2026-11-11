@@ -324,7 +324,6 @@ Sila kembali sebentar lagi.</string>
     <string name="confirm_unlock_tips">Adakah anda pasti ingin membuka semua tip anda?</string>
     <string name="min_spend_required">Sila masukan jumlah yang lebih besar daripada 0.0001 kredit.</string>
 
-    <string name="buy_lbc">Beli Kredit LBRY</string>
     <string name="hash_not_supported">Peranti anda tidak menyokong syarat minimum untuk pembelian anda.</string>
     <string name="receive_address_not_set">Tiada alamat dompet dijumpai. Sila cipta alamat baru dan cuba lagi.</string>
 
