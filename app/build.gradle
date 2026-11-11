@@ -19,14 +19,19 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // This fork distributes its APK through GitHub Releases.
+    lint {
+        disable 'ExpiredTargetSdkVersion'
+    }
+
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'lib/x86_64/darwin/libscrypt.dylib'
     }
 
-    // The prebuilt FFmpegKit package is used only for the ARM64 debug trial.
+    // The prebuilt FFmpegKit package is supported by the ARM64 builds.
     variantFilter { variant ->
-        if (variant.buildType.name != 'debug' || !variant.flavors.any { it.name == '__64bit' }) {
+        if (!variant.flavors.any { it.name == '__64bit' }) {
             variant.ignore = true
         }
     }
@@ -57,6 +62,7 @@ android {
             resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret")}\""
         }
         release {
+            versionNameSuffix "-fork.1"
             Properties twitterProps = new Properties()
             twitterProps.load(project.file('twitter.properties').newDataInputStream())
             resValue "string", "TWITTER_CONSUMER_KEY",  "\"${twitterProps.getProperty("twitterConsumerKey")}\""

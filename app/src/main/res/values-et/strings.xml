@@ -222,7 +222,6 @@
     <!-- Wallet -->
     <string name="balance">Saldo</string>
     <string name="convert_credits">Valuutavahetustes saad vahetada oma LBC raha USD vastu ja selle välja võtta. &lt;a href=\"https://lbry.com/faq/exchanges\"&gt;Loe lisa&lt;/a&gt;.</string>
-    <string name="convert_credits_bittrex">&lt;a href=\"https://bittrex.com/Account/Register?referralCode=4M1-P30-BON\"&gt;Valuutavahetus Bittrex LBC > USD&lt;/a&gt;</string>
     <string name="sdk_still_initializing">Taustateenus veel stardib. Võid seniks postitusi sirvida.</string>
     <string name="sdk_initializing_functionality">Seda ei saa hetkel teha, kuna taustateenus pole veel käivitunud.</string>
 

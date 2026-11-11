@@ -266,7 +266,6 @@
     <!-- Wallet -->
     <string name="balance">Saldo</string>
     <string name="convert_credits">Puoi convertire i tuoi crediti in USD e trasferire il valore convertito utilizzando un cambio. &lt;a href=\"https://lbry.com/faq/exchanges\"&gt;Vedi altro&lt;/a&gt;.</string>
-    <string name="convert_credits_bittrex">&lt;a href=\"https://bittrex.com/Account/Register?referralCode=4M1-P30-BON\"&gt;Converti crediti in USD su Bittrex&lt;/a&gt;</string>
     <string name="sdk_initializing">Avvio servizio in background...</string>
     <string name="sdk_still_initializing">Il servizio in background è ancora in avvio. Puoi esplorare e visualizzare contenuti nel frattempo.</string>
     <string name="sdk_initializing_functionality">Non puoi fare questo al momento perché il servizio in background è ancora in avviamento.</string>

@@ -266,7 +266,6 @@
     <!-- Wallet -->
     <string name="balance">Saldo</string>
     <string name="convert_credits">Você pode converter seus créditos em USD e retirar o valor convertido usando uma exchange. &lt;a href=\"https://lbry.com/faq/exchanges\"&gt;Saiba mais&lt;/a&gt;.</string>
-    <string name="convert_credits_bittrex">&lt;a href=\"https://bittrex.com/Account/Register?referralCode=4M1-P30-BON\"&gt;Converter creditos para USD no Bittrex&lt;/a&gt;</string>
     <string name="sdk_initializing">O serviço de segundo plano está sendo inicializado....</string>
     <string name="sdk_still_initializing">O serviço de segundo plano ainda está sendo inicializado. Você pode explorar conteúdos incríveis nesse meio tempo.</string>
     <string name="sdk_initializing_functionality">Você não pode fazer isso agora porque o serviço de segundo plano ainda está sendo inicializado.</string>
