@@ -395,6 +395,13 @@ public class WalletFragment extends BaseFragment implements SdkStatusListener, W
         });
     }
 
+    public void onWalletSyncDisabled() {
+        switchSyncStatus.setChecked(false);
+        switchSyncStatus.setText(R.string.off);
+        textWalletHintSyncStatus.setText(R.string.backup_notsynced);
+        textConnectedEmail.setText(null);
+    }
+
     public void onWalletSyncEnabled() {
         switchSyncStatus.setText(R.string.on);
         switchSyncStatus.setChecked(true);

@@ -51,7 +51,9 @@
                 android:id="@+id/signed_in_email"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
                 android:ellipsize="middle"
                 android:fontFamily="@font/inter"
                 android:gravity="center"
@@ -60,6 +62,15 @@
                 android:textAllCaps="true"
                 android:textColor="@color/menuItemForeground"
                 android:textFontWeight="300" />
+            <Button
+                android:id="@+id/sign_out_button"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/signed_in_email"
+                android:layout_centerHorizontal="true"
+                android:text="@string/sign_out"
+                android:textColor="@color/menuItemForeground" />
         </RelativeLayout>
     </RelativeLayout>
 

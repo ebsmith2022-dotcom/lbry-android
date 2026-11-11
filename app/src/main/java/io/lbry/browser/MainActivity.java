@@ -655,6 +655,14 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         });
         navItemsView.setAdapter(navMenuAdapter);
 
+        findViewById(R.id.sign_out_button).setOnClickListener(view ->
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.sign_out)
+                        .setMessage(R.string.sign_out_message)
+                        .setNegativeButton(R.string.cancel, null)
+                        .setPositiveButton(R.string.sign_out, (dialog, which) -> signOut())
+                        .show());
+
         findViewById(R.id.sign_in_button_container).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -2771,13 +2779,45 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         signedInEmailContainer.setPadding(0, statusBarHeight, 0, 0);
     }
 
-    private void showSignedInUser() {
-        if (Lbryio.isSignedIn()) {
-            findViewById(R.id.sign_in_button_container).setVisibility(View.GONE);
-            findViewById(R.id.signed_in_email_container).setVisibility(View.VISIBLE);
-            ((TextView) findViewById(R.id.signed_in_email)).setText(Lbryio.getSignedInEmail());
-            findViewById(R.id.sign_in_header_divider).setBackgroundColor(getResources().getColor(R.color.lightDivider));
+    private void signOut() {
+        if (fullSyncInProgress || (syncSetTask != null && syncSetTask.getStatus() != AsyncTask.Status.FINISHED)) {
+            new AlertDialog.Builder(this)
+                    .setMessage(R.string.sign_out_sync_in_progress)
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+            return;
         }
+
+        PreferenceManager.getDefaultSharedPreferences(this).edit()
+                .remove(PREFERENCE_KEY_AUTH_TOKEN)
+                .putBoolean(PREFERENCE_KEY_INTERNAL_WALLET_SYNC_ENABLED, false)
+                .apply();
+        Lbryio.AUTH_TOKEN = null;
+        Lbryio.currentUser = null;
+        Lbryio.lastRemoteHash = null;
+        Lbryio.lastWalletSync = null;
+        pendingSyncSetQueue.clear();
+        queuedSyncCount = 0;
+        if (webSocketClient != null) {
+            webSocketClient.close();
+            webSocketClient = null;
+        }
+
+        showSignedInUser();
+        for (Fragment fragment : openNavFragments.values()) {
+            if (fragment instanceof WalletFragment && fragment.getView() != null) {
+                ((WalletFragment) fragment).onWalletSyncDisabled();
+            }
+        }
+    }
+
+    private void showSignedInUser() {
+        boolean signedIn = Lbryio.isSignedIn();
+        findViewById(R.id.sign_in_button_container).setVisibility(signedIn ? View.GONE : View.VISIBLE);
+        findViewById(R.id.signed_in_email_container).setVisibility(signedIn ? View.VISIBLE : View.GONE);
+        ((TextView) findViewById(R.id.signed_in_email)).setText(Lbryio.getSignedInEmail());
+        findViewById(R.id.sign_in_header_divider).setBackgroundColor(
+                ContextCompat.getColor(this, signedIn ? R.color.lightDivider : R.color.lbryGreen));
     }
 
     private Fragment getCurrentFragment() {

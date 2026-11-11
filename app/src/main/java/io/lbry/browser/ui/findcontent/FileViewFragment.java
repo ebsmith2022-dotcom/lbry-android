@@ -1857,7 +1857,7 @@ public class FileViewFragment extends BaseFragment implements
     static void preparePlayback(Context context, Claim claim, String streamUrl, boolean legacyStream) {
         SimpleExoPlayer player = MainActivity.appPlayer;
         Uri fallback = Uri.parse(streamUrl);
-        if (context instanceof MainActivity && legacyStream && claim.isFree() && !Lbryio.isSignedIn()) {
+        if (context instanceof MainActivity && legacyStream && claim.isFree()) {
             AsyncTask.execute(() -> {
                 Uri publicStream = resolvePublicStream(claim);
                 ((MainActivity) context).runOnUiThread(() -> {
