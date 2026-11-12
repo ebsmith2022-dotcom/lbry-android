@@ -14,7 +14,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/inter"
-            android:text="@string/content_freedom"
+            android:text="@string/app_name"
             android:textColor="@color/lbryGreen"
             android:textSize="24sp" />
 
@@ -23,9 +23,21 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:fontFamily="@font/inter"
-            android:text="@string/about_paragraph"
+            android:text="@string/community_intro"
             android:textSize="14sp"
             android:textFontWeight="300" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:minHeight="48dp"
+            android:gravity="center_vertical"
+            android:autoLink="email"
+            android:linksClickable="true"
+            android:text="@string/community_support"
+            android:textColorLink="@color/lbryGreen"
+            android:textSize="14sp" />
 
         <TextView
             android:id="@+id/about_link_what_is_lbry"

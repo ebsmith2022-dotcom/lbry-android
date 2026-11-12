@@ -6,12 +6,13 @@ Prepared November 11, 2026. The working GitHub release v0.17.1-fork.3 is unchang
 ## Identity and build
 
 - Independent fork name approved by owner: LBRY Community.
+- Public support email approved by owner: lbrycommunity@gmail.com (Google account creation verified November 11, 2026).
 - Application ID: `com.ebsmith2022.lbrycommunity` (availability not yet checked in Play Console).
 - Release version: `0.18.0-play-alpha.1`, version code 17024, ARM64, min SDK 24, target SDK 36, compile SDK 37.
 - AGP 9.5.1 / Gradle 9.6.0; tested with Android Studio's bundled JDK 25.
 - App has its own storage and loopback ports 5379/5380. It does not migrate or read the installed LBRY app's wallet. A later migration needs a separately designed, user-controlled process.
 - SDK native runtime is the checksum-pinned upstream 0.102.0 AAR. Four Java service classes are maintained in `sdk/`, with upstream license and revision recorded there.
-- APK is debug-signed for emulator testing. AAB is unsigned; no upload key or Play signing setup has been performed for this package.
+- APK is debug-signed for emulator and owner phone testing. AAB is unsigned; no upload key or Play signing setup has been performed for this package.
 
 ## Implemented
 
@@ -27,6 +28,7 @@ Prepared November 11, 2026. The working GitHub release v0.17.1-fork.3 is unchang
 - Automatic Android backup disabled. No personal wallet files, seeds, or keys were accessed or packaged during this work.
 - Process-lifetime media cache in its own cache subdirectory, avoiding blocking cache release and directory races during video changes.
 - Floating controls adjusted for navigation-bar insets.
+- Welcome and About identify LBRY Community as an independent fork; About includes the approved support email. This does not replace the outstanding fork-specific terms/privacy work.
 
 ## Verification and limits
 
@@ -35,13 +37,14 @@ Prepared November 11, 2026. The working GitHub release v0.17.1-fork.3 is unchang
 - Emulator startup, welcome screen, notifications prompt, and main browsing screen exercised. The isolated SDK completed initial wallet sync with zero blocks behind.
 - Both APK and AAB contain 50 ELF libraries/extensions checked for 16 KB-compatible LOAD alignment. APK ZIP alignment also passed. This is **not** a successful 16 KB device runtime test.
 - Full lint: no unbaselined errors; approximately 1,180 warnings and one third-party lint compatibility hint. Exactly 54 unchanged upstream translation findings are recorded in `app/lint-baseline-translations.xml`; code errors are not suppressed. Baseline entries were checked against the parent commit.
-- Signed-in playback, publishing, camera capture, download export, long background playback, older Android devices, tablet/rotation layouts, and 16 KB runtime testing remain necessary. Existing phone validation applies to the older GitHub release, not this alpha.
+- Owner reports successful signed-in playback and publishing with a custom thumbnail on the Galaxy S24+ using this alpha (November 11, 2026). These are user-reported results.
+- Camera capture, download export, long background playback, older Android devices, tablet/rotation layouts, and 16 KB runtime testing remain necessary.
 - Imported upload files are retained in app-private storage for the current publishing flow; a draft-aware cleanup policy still needs implementation.
 - Old Python 3.7/OpenSSL 1.1 and other native dependencies require a security/lifecycle review. The local SDK HTTP API needs a threat review before recommending this wallet build for general use.
 
 ## Release blockers requiring owner/service decisions
 
-The owner deferred support email, launch countries, and registration on November 11. Do not invent these details or publish placeholder policies.
+The owner approved lbrycommunity@gmail.com as the public support email on November 11. The owner selected a United States launch and confirmed that no organization or D-U-N-S number exists yet. Organization developer registration is blocked on establishing that identity. Do not invent those details or publish placeholder policies.
 
 1. **Developer account type:** Google's Play Console requirements say providers of cryptocurrency software wallets must register as an organization. Resolve organization identity and D-U-N-S requirements before paying/registering. The 12-testers/14-days rule quoted earlier applies to qualifying new personal accounts; it is not a substitute for the required organization account.
 2. **Wallet declaration and launch countries:** Complete Financial Features declarations accurately. Google's current form provides a non-custodial-wallet option; verify applicability and supporting obligations rather than asserting a licensing exemption. Check how optional wallet sync affects the description.
