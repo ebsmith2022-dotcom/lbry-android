@@ -72,32 +72,8 @@ public class ManualVerificationFragment extends Fragment {
             }
         });
 
-        root.findViewById(R.id.verification_manual_skip_queue_verify).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showLoading();
-                if (MainActivity.instance != null) {
-                    MainActivity.instance.checkPurchases(new GenericTaskHandler() {
-                        @Override
-                        public void beforeStart() {
-
-                        }
-
-                        @Override
-                        public void onSuccess() {
-                            hideLoading();
-                            listener.onManualVerifyContinue();
-                        }
-
-                        @Override
-                        public void onError(Exception error) {
-                            hideLoading();
-                            showError(error.getMessage());
-                        }
-                    });
-                }
-            }
-        });
+        buttonSkipQueue.setVisibility(View.GONE);
+        root.findViewById(R.id.verification_manual_skip_queue_verify).setVisibility(View.GONE);
 
         root.findViewById(R.id.verification_manual_phone_number_button).setOnClickListener(new View.OnClickListener() {
             @Override

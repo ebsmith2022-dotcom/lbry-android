@@ -52,13 +52,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.billingclient.api.BillingClient;
-import com.android.billingclient.api.BillingClientStateListener;
-import com.android.billingclient.api.BillingResult;
-import com.android.billingclient.api.ConsumeParams;
-import com.android.billingclient.api.ConsumeResponseListener;
-import com.android.billingclient.api.Purchase;
-import com.android.billingclient.api.PurchasesUpdatedListener;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
@@ -266,7 +259,6 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     public static final boolean startingSignInFlowActivity = false;
 
     private ActionMode actionMode;
-    private BillingClient billingClient;
     @Getter
     private boolean enteringPIPMode = false;
     private boolean fullSyncInProgress = false;
@@ -468,31 +460,19 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         dbHelper = new DatabaseHelper(this);
         checkNotificationOpenIntent(getIntent());
         setContentView(R.layout.activity_main);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.drawer_layout), (view, insets) -> {
+            int bottom = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom;
+            findViewById(R.id.floating_balance_main_container).setTranslationY(-bottom);
+            findViewById(R.id.global_now_playing_card).setTranslationY(-bottom);
+            return insets;
+        });
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         updateMiniPlayerMargins();
 
-        // setup the billing client in main activity (to handle cases where the verification purchase flow may have been interrupted)
-        billingClient = BillingClient.newBuilder(this)
-                .setListener(new PurchasesUpdatedListener() {
-                    @Override
-                    public void onPurchasesUpdated(@NonNull BillingResult billingResult, @Nullable List<Purchase> purchases) {
-                        int responseCode = billingResult.getResponseCode();
-                        if (responseCode == BillingClient.BillingResponseCode.OK && purchases != null)
-                        {
-                            for (Purchase purchase : purchases) {
-                                handlePurchase(purchase);
-                            }
-                        }
-                    }
-                })
-                .enablePendingPurchases()
-                .build();
-        establishBillingClientConnection();
-
-        playerNotificationManager = new PlayerNotificationManager(
-                this, LbrynetService.NOTIFICATION_CHANNEL_ID, PLAYBACK_NOTIFICATION_ID, new PlayerNotificationDescriptionAdapter());
+        playerNotificationManager = new PlayerNotificationManager.Builder(this, PLAYBACK_NOTIFICATION_ID, LbrynetService.NOTIFICATION_CHANNEL_ID)
+                .setMediaDescriptionAdapter(new PlayerNotificationDescriptionAdapter()).build();
 
         // TODO: Check Google Play Services availability
         // castContext = CastContext.getSharedInstance(this);
@@ -1157,7 +1137,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         appStarted = false;
 
         if (!keepSdkBackground()) {
-            sendBroadcast(new Intent(LbrynetService.ACTION_STOP_SERVICE));
+            sendBroadcast(new Intent(LbrynetService.ACTION_STOP_SERVICE).setPackage(getPackageName()));
         }
 
         super.onDestroy();
@@ -1165,14 +1145,13 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     public static void stopExoplayer() {
         if (appPlayer != null) {
-            appPlayer.stop(true);
+            appPlayer.stop();
+            appPlayer.clearMediaItems();
             appPlayer.release();
             appPlayer = null;
         }
-        if (playerCache != null) {
-            playerCache.release();
-            playerCache = null;
-        }
+        // The disk cache is shared for this process lifetime. Releasing it here
+        // blocks the UI and races with the next player opening the same directory.
     }
 
     @Override
@@ -1195,7 +1174,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                 updateFloatingWalletBalance();
                 updateUsdWalletBalanceInNav();
 
-                sendBroadcast(new Intent(ACTION_WALLET_BALANCE_UPDATED));
+                sendBroadcast(new Intent(ACTION_WALLET_BALANCE_UPDATED).setPackage(getPackageName()));
             }
 
             @Override
@@ -1247,7 +1226,6 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         super.onResume();
         PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 
-        checkPurchases();
         checkWebSocketClient();
         updateMiniPlayerMargins();
         enteringPIPMode = false;
@@ -1256,6 +1234,13 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         checkFirstRun();
         checkNowPlaying();
 
+        if (isFirstRunCompleted() && Build.VERSION.SDK_INT >= 33) {
+            SharedPreferences notificationPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+            if (!notificationPrefs.getBoolean("notification_permission_requested", false)) {
+                notificationPrefs.edit().putBoolean("notification_permission_requested", true).apply();
+                requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1003);
+            }
+        }
         if (isFirstRunCompleted()) {
             // check (and start) the LBRY SDK service
             serviceRunning = isServiceRunning(this, LbrynetService.class);
@@ -1277,73 +1262,6 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     public boolean isFirstRunCompleted() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         return sp.getBoolean(PREFERENCE_KEY_INTERNAL_FIRST_RUN_COMPLETED, false);
-    }
-
-    public void checkPurchases() {
-        if (billingClient != null) {
-            Purchase.PurchasesResult result = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-            if (result.getPurchasesList() != null) {
-                for (Purchase purchase : result.getPurchasesList()) {
-                    handlePurchase(purchase);
-                }
-            }
-        }
-    }
-
-    public void checkPurchases(GenericTaskHandler handler) {
-        boolean purchaseFound = false;
-        if (billingClient != null) {
-            Purchase.PurchasesResult result = billingClient.queryPurchases(BillingClient.SkuType.INAPP);
-            if (result.getPurchasesList() != null) {
-                for (Purchase purchase : result.getPurchasesList()) {
-                    handlePurchase(purchase, handler);
-                    purchaseFound = true;
-                    return;
-                }
-            }
-        }
-
-        if (!purchaseFound) {
-            handler.onError(new Exception(getString(R.string.skip_queue_purchase_not_found)));
-        }
-    }
-
-    private void handlePurchase(Purchase purchase) {
-        handleBillingPurchase(purchase, billingClient, MainActivity.this, null, new RewardVerifiedHandler() {
-            @Override
-            public void onSuccess(RewardVerified rewardVerified) {
-                if (Lbryio.currentUser != null) {
-                    Lbryio.currentUser.setRewardApproved(rewardVerified.isRewardApproved());
-                }
-            }
-
-            @Override
-            public void onError(Exception error) {
-                // pass
-            }
-        });
-    }
-
-    private void handlePurchase(Purchase purchase, GenericTaskHandler handler) {
-        handleBillingPurchase(purchase, billingClient, MainActivity.this, null, new RewardVerifiedHandler() {
-            @Override
-            public void onSuccess(RewardVerified rewardVerified) {
-                if (Lbryio.currentUser != null) {
-                    Lbryio.currentUser.setRewardApproved(rewardVerified.isRewardApproved());
-                }
-
-                if (handler != null) {
-                    handler.onSuccess();
-                }
-            }
-
-            @Override
-            public void onError(Exception error) {
-                if (handler != null) {
-                    handler.onError(error);
-                }
-            }
-        });
     }
 
     private void checkPendingOpens() {
@@ -1903,7 +1821,6 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         }
 
         //findViewById(R.id.global_sdk_initializing_status).setVisibility(View.GONE);
-        checkAndEnableShareUsageData();
 
         scheduleWalletBalanceUpdate();
         scheduleWalletSyncTask();
@@ -2093,7 +2010,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             if (nowPlayingClaimUrl != null) {
                 Intent launchIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(nowPlayingClaimUrl));
                 launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                return PendingIntent.getActivity(MainActivity.this, 0, launchIntent, 0);
+                return PendingIntent.getActivity(MainActivity.this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE);
             }
             return null;
         }
@@ -2489,7 +2406,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                 pendingChannelUrl = intent.getStringExtra("url");
             }
         };
-        registerReceiver(requestsReceiver, intentFilter);
+        androidx.core.content.ContextCompat.registerReceiver(this, requestsReceiver, intentFilter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     private void loadFollowingContent() {
@@ -2683,10 +2600,22 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             startingFilePickerActivity = false;
             if (resultCode == RESULT_OK && data != null) {
                 Uri fileUri = data.getData();
-                String filePath = Helper.getRealPathFromURI_API19(this, fileUri);
-                for (FilePickerListener listener : filePickerListeners) {
-                    listener.onFilePicked(filePath);
-                }
+                new AsyncTask<Void, Void, String>() {
+                    protected String doInBackground(Void... ignored) {
+                        try {
+                            return io.lbry.browser.utils.DocumentFiles.importDocument(MainActivity.this, fileUri);
+                        } catch (java.io.IOException | SecurityException error) {
+                            return null;
+                        }
+                    }
+                    protected void onPostExecute(String filePath) {
+                        if (isFinishing() || isDestroyed()) return;
+                        for (FilePickerListener listener : new ArrayList<>(filePickerListeners)) {
+                            listener.onFilePicked(filePath);
+                        }
+                    }
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
             } else {
                 for (FilePickerListener listener : filePickerListeners) {
                     listener.onFilePickerCancelled();
@@ -3200,8 +3129,15 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             if (clipData != null) {
                 Uri uri = clipData.getItemAt(0).getUri();
 
-                String path = Helper.getRealPathFromURI_API19(this, uri);
-                openSendTo(path);
+                new AsyncTask<Void, Void, String>() {
+                    protected String doInBackground(Void... ignored) {
+                        try { return io.lbry.browser.utils.DocumentFiles.importDocument(MainActivity.this, uri); }
+                        catch (java.io.IOException | SecurityException error) { return null; }
+                    }
+                    protected void onPostExecute(String path) {
+                        if (!isFinishing() && !isDestroyed() && path != null) openSendTo(path);
+                    }
+                }.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
             }
         }
     }
@@ -3255,7 +3191,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                 }
             }
         };
-        registerReceiver(serviceActionsReceiver, intentFilter);
+        androidx.core.content.ContextCompat.registerReceiver(this, serviceActionsReceiver, intentFilter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     private void unregisterReceivers() {
@@ -3266,10 +3202,10 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     private Notification buildServiceNotification() {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, LbrynetService.NOTIFICATION_CHANNEL_ID);
         Intent contextIntent = new Intent(this, MainActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, contextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, contextIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent stopIntent = new Intent(LbrynetService.ACTION_STOP_SERVICE);
-        PendingIntent stopPendingIntent = PendingIntent.getBroadcast(this, 0, stopIntent, 0);
+        PendingIntent stopPendingIntent = PendingIntent.getBroadcast(this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE);
 
         String serviceDescription = "The LBRY service is running in the background.";
         Notification notification = builder.setColor(ContextCompat.getColor(this, R.color.lbryGreen))
@@ -3389,7 +3325,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             Lbry.SDK_READY = sdkReady;
             if (context != null) {
                 if (sdkReady) {
-                    context.sendBroadcast(new Intent(ACTION_SDK_READY));
+                    context.sendBroadcast(new Intent(ACTION_SDK_READY).setPackage(context.getPackageName()));
 
                     // update listeners
                     for (SdkStatusListener listener : listeners) {
@@ -3822,83 +3758,6 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             return false;
         }
         return (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED);
-    }
-
-    private void establishBillingClientConnection() {
-        if (billingClient != null) {
-            billingClient.startConnection(new BillingClientStateListener() {
-                @Override
-                public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
-                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                        // no need to do anything here. purchases are always checked server-side
-                        checkPurchases();
-                    }
-                }
-
-                @Override
-                public void onBillingServiceDisconnected() {
-                    establishBillingClientConnection();
-                }
-            });
-        }
-    }
-
-    public static void handleBillingPurchase(
-            Purchase purchase,
-            BillingClient billingClient,
-            Context context,
-            View progressView,
-            RewardVerifiedHandler handler) {
-        String sku = purchase.getSku();
-        if (SKU_SKIP.equalsIgnoreCase(sku)) {
-            // send purchase token for verification
-            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED
-                /*&& isSignatureValid(purchase)*/) {
-                // consume the purchase
-                String purchaseToken = purchase.getPurchaseToken();
-                ConsumeParams consumeParams = ConsumeParams.newBuilder().setPurchaseToken(purchaseToken).build();
-                billingClient.consumeAsync(consumeParams, new ConsumeResponseListener() {
-                    @Override
-                    public void onConsumeResponse(@NonNull BillingResult billingResult, @NonNull String s) {
-
-                    }
-                });
-
-                // send the purchase token to the backend to complete verification
-                AndroidPurchaseTask task = new AndroidPurchaseTask(purchaseToken, progressView, context, handler);
-                task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }
-        }
-    }
-
-    private void checkAndEnableShareUsageData() {
-        final SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean shareUsageData = sp.getBoolean(PREFERENCE_KEY_SHARE_USAGE_DATA, false);
-        if (shareUsageData) {
-            return;
-        }
-
-        (new AsyncTask<Void, Void, Void>() {
-            protected Void doInBackground(Void... params) {
-                PrintStream out = null;
-                try {
-                    String fileContent = "true";
-                    String path = String.format("%s/sud", Utils.getAppInternalStorageDir(MainActivity.this));
-                    out = new PrintStream(new FileOutputStream(path));
-                    out.print(fileContent);
-                } catch (Exception ex) {
-                    // pass
-                } finally {
-                    Helper.closeCloseable(out);
-                }
-                return null;
-            }
-
-            protected void onPostExecute(Void result) {
-                updateSdkSetting("share_usage_data", true);
-                sp.edit().putBoolean(PREFERENCE_KEY_SHARE_USAGE_DATA, true).apply();
-            }
-        }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void updateSdkSetting(String key, Object value) {

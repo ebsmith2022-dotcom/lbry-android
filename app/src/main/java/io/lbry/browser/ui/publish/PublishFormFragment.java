@@ -555,18 +555,7 @@ public class PublishFormFragment extends BaseFragment implements
     }
 
     private void checkStoragePermissionAndLaunchFilePicker() {
-        Context context = getContext();
-        if (MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
-            launchPickerPending = false;
-            launchFilePicker();
-        } else {
-            launchPickerPending = true;
-            MainActivity.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    MainActivity.REQUEST_STORAGE_PERMISSION,
-                    getString(R.string.storage_permission_rationale_images),
-                    context,
-                    true);
-        }
+        launchFilePicker();
     }
 
     private static final int REQUEST_CUSTOM_THUMBNAIL = 3010;
@@ -1192,7 +1181,7 @@ public class PublishFormFragment extends BaseFragment implements
                 if (context instanceof MainActivity) {
                     MainActivity activity = (MainActivity) context;
                     activity.showMessage(R.string.publish_successful);
-                    activity.sendBroadcast(new Intent(MainActivity.ACTION_PUBLISH_SUCCESSFUL));
+                    activity.sendBroadcast(new Intent(MainActivity.ACTION_PUBLISH_SUCCESSFUL).setPackage(activity.getPackageName()));
                 }
             }
 

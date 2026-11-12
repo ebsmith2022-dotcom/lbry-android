@@ -2,7 +2,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    namespace 'io.lbry.browser'
+    compileSdk 37
+    buildFeatures { buildConfig true; resValues true }
+    // Only unchanged upstream translation findings are baselined; code checks remain enabled.
+    lint { baseline = file("lint-baseline-translations.xml") }
     flavorDimensions "default"
 
     compileOptions {
@@ -11,29 +15,18 @@ android {
     }
 
     defaultConfig {
-        applicationId "io.lbry.browser"
+        applicationId "com.ebsmith2022.lbrycommunity"
         minSdkVersion 21
-        targetSdkVersion 29
-        versionCode 1701
-        versionName "0.17.1"
+        targetSdkVersion 36
+        versionCode 1702
+        versionName "0.18.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    // This fork distributes its APK through GitHub Releases.
-    lint {
-        disable 'ExpiredTargetSdkVersion'
-    }
 
     packagingOptions {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'lib/x86_64/darwin/libscrypt.dylib'
-    }
-
-    // The prebuilt FFmpegKit package is supported by the ARM64 builds.
-    variantFilter { variant ->
-        if (!variant.flavors.any { it.name == '__64bit' }) {
-            variant.ignore = true
-        }
     }
 
     productFlavors {
@@ -46,7 +39,7 @@ android {
         __64bit {
             minSdkVersion 24
             // Refresh the extracted SDK code when installing over an earlier debug APK.
-            resValue 'string', 'private_version', '0.102.0-android-wallet-hub-1'
+            resValue 'string', 'private_version', '0.102.0-play-1'
             versionCode android.defaultConfig.versionCode * 10 + 4
             ndk {
                 abiFilter "arm64-v8a"
@@ -57,16 +50,20 @@ android {
     buildTypes {
         debug {
             Properties twitterProps = new Properties()
-            twitterProps.load(project.file('twitter.properties').newDataInputStream())
-            resValue "string", "TWITTER_CONSUMER_KEY",  "\"${twitterProps.getProperty("twitterConsumerKey")}\""
-            resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret")}\""
+            if (project.file('twitter.properties').exists()) {
+                project.file('twitter.properties').withInputStream { twitterProps.load(it) }
+            }
+            resValue "string", "TWITTER_CONSUMER_KEY",  "\"${twitterProps.getProperty("twitterConsumerKey", "")}\""
+            resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret", "")}\""
         }
         release {
-            versionNameSuffix "-fork.3-test"
+            versionNameSuffix "-play-alpha.1"
             Properties twitterProps = new Properties()
-            twitterProps.load(project.file('twitter.properties').newDataInputStream())
-            resValue "string", "TWITTER_CONSUMER_KEY",  "\"${twitterProps.getProperty("twitterConsumerKey")}\""
-            resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret")}\""
+            if (project.file('twitter.properties').exists()) {
+                project.file('twitter.properties').withInputStream { twitterProps.load(it) }
+            }
+            resValue "string", "TWITTER_CONSUMER_KEY",  "\"${twitterProps.getProperty("twitterConsumerKey", "")}\""
+            resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret", "")}\""
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -104,7 +101,12 @@ def patchWalletSdk = tasks.register('patchWalletSdk', Exec) {
     }
 }
 
-android.sourceSets.__64bit.assets.srcDir(patchedSdkAssets)
+android.sourceSets.__64bit.assets.srcDir(patchedSdkAssets.get().asFile)
+androidComponents {
+    beforeVariants(selector().all()) { variant ->
+        if (!variant.productFlavors.any { it.second == '__64bit' }) variant.enable = false
+    }
+}
 tasks.named('preBuild').configure { dependsOn(patchWalletSdk) }
 
 dependencies {
@@ -135,15 +137,15 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:21.0.0'
     implementation 'com.google.oauth-client:google-oauth-client:1.30.4'
 
-    implementation 'com.android.billingclient:billing:3.0.2'
+    implementation 'androidx.core:core:1.15.0'
 
     implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'com.google.android.exoplayer:exoplayer-core:2.13.3'
-    implementation 'com.google.android.exoplayer:exoplayer-dash:2.13.3'
-    implementation 'com.google.android.exoplayer:exoplayer-hls:2.13.3'
-    implementation 'com.google.android.exoplayer:exoplayer-ui:2.13.3'
-    implementation 'com.google.android.exoplayer:extension-cast:2.13.3'
-    implementation 'com.google.android.exoplayer:extension-mediasession:2.13.3'
+    implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
+    implementation 'com.google.android.exoplayer:exoplayer-dash:2.19.1'
+    implementation 'com.google.android.exoplayer:exoplayer-hls:2.19.1'
+    implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
+    implementation 'com.google.android.exoplayer:extension-cast:2.19.1'
+    implementation 'com.google.android.exoplayer:extension-mediasession:2.19.1'
 
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
 
@@ -152,7 +154,7 @@ dependencies {
     implementation 'com.github.chrisbanes:PhotoView:2.3.0'
     implementation 'com.atlassian.commonmark:commonmark:0.14.0'
 
-    implementation 'dev.ffmpegkit-maintained:ffmpeg-kit-full-gpl:7.1.6'
+    implementation 'dev.ffmpegkit-maintained:ffmpeg-kit-full-gpl:7.1.7'
     runtimeOnly 'com.arthenica:smart-exception-java:0.2.1'
 
     implementation 'commons-codec:commons-codec:1.15'
@@ -162,20 +164,23 @@ dependencies {
     implementation ('com.journeyapps:zxing-android-embedded:4.1.0') { transitive = false }
     implementation 'com.google.zxing:core:3.3.0'
 
-    compileOnly 'org.projectlombok:lombok:1.18.10'
-    annotationProcessor 'org.projectlombok:lombok:1.18.10'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.11.0'
 
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test:runner:1.3.0'
-    androidTestImplementation 'androidx.test:rules:1.3.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test:rules:1.6.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
 
-    __32bitImplementation 'io.lbry:lbrysdk32:0.102.0'
-    __64bitImplementation androidSdk64
+
+    __64bitImplementation project(':sdk')
     add('walletSdkArchive', "${androidSdk64}@aar")
     //__64bitImplementation(name: 'lbrysdk', ext: 'aar')
 }
 
-apply plugin: 'com.google.gms.google-services'
+// Enable Firebase only after adding this fork's own registered project configuration.
+if (providers.gradleProperty('enableFirebase').getOrElse('false').toBoolean()) {
+    apply plugin: 'com.google.gms.google-services'
+}

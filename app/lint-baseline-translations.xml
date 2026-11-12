@@ -1,0 +1,165 @@
+<?xml version='1.0' encoding='utf-8'?>
+<issues format="6" by="lint 9.5.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.5.1)">
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;શું તમે ખરેખર પસંદ કરેલી સામગ્રી આઇટમ્સ કાઢી નાખવા માંગો છો?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-gu/strings.xml" line="212" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;સામગ્રી આઇટમ્સ સફળતાપૂર્વક કાઢી નાખવામાં આવી હતી.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-gu/strings.xml" line="216" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Êtes-vous sûr de vouloir supprimer les éléments de contenu sélectionnés?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="220" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;क्या आप निश्चित रूप से चुनी हुई सामग्री को हटाना चाहते हैं&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="220" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja excluir os itens de conteúdo selecionados?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="220" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja excluir o item de conteúdo selecionado?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="220" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Le contenu a été supprimé avec succès.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="224" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;चुनी हुई सामग्री वस्तु सफलतापूर्वक हटा दी गई है&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="224" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Os itens de conteúdo foram excluídos com sucesso.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="224" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Os itens de conteúdo foram excluídos com sucesso.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="224" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Ви впевнені, що бажаєте видалити обраний елемент?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-uk/strings.xml" line="224" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Da li ste sigurni da želite obrisati izabrani sadržaj?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="226" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Елемент контенту був успішно видалений.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-uk/strings.xml" line="230" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Sadržaj je uspešno obrisan.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="231" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Вы уверены, что хотите удалить выделенный элемент контента?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="232" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Элемент контента был успешно удалён.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="238" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;શું તમે ખરેખર પસંદ કરેલી ચેનલને કાઢી નાખવા માંગો છો?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-gu/strings.xml" line="455" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;ચેનલો સફળતાપૂર્વક કાઢી નાખવામાં આવી હતી.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-gu/strings.xml" line="459" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Ви впевнені, що бажаєте видалити обраний канал?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-uk/strings.xml" line="497" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Voulez-vous vraiment supprimer les chaînes sélectionnées?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="503" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;क्या आप निश्चित रूप से चुने हुए चैनल को हटाना चाहते हैं&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="503" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja excluir o canal selecionado?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="503" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja excluir os canais selecionados?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="503" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Канал був успішно видалений.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-uk/strings.xml" line="503" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;La chaîne a été supprimée avec succès.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="507" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;चैनल सफलतापूर्वक हटा दिया गया है&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="507" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;O canal foi excluído com sucesso.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="507" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Os canais foram excluídos com sucesso.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="507" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Da li ste sigurni da želite obrisati izabrani kanal?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="516" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Kanal je uspešno obrisan.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="521" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Вы уверенны, что хотите удалить выбранный канал?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="529" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Канал был успешно удалён.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="535" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;શું તમે ખરેખર તમારા ઉપકરણમાંથી પસંદ કરેલી ફાઇલોને કાઢી નાખવા માંગો છો?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-gu/strings.xml" line="536" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;ફાઇલો સફળતાપૂર્વક કાઢી નાખવામાં આવી હતી.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-gu/strings.xml" line="540" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Voulez-vous vraiment supprimer les fichiers sélectionnés de votre appareil?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="586" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;क्या आप यकीनन इस चुनी हुई फाइल को अपनी डिवाइस से हटाना चाहते हैं?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="586" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja remover os arquivos selecionados do seu dispositivo?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="586" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja remover os arquivos selecionados do seu dispositivo?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="586" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Les fichiers ont été supprimés avec succès.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="590" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;फाइल सफलतापूर्वक हटा दी गई है&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="590" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;O arquivo foi excluído com sucesso&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="590" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Os arquivos foram excluídos com sucesso.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="590" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Ви впевнені, що хочете видали обраний файл з пристрою? &lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-uk/strings.xml" line="590" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Файл був успішно видалений.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-uk/strings.xml" line="596" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Da li ste sigurni da želite da obrišete odabranu datoteku sa Vašeg uređaja?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="605" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Datoteka je uspešno obrisana.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="610" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Вы уверены, что хотите удалить выбранный файл с Вашего устройства?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="624" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Voulez-vous vraiment supprimer les notifications sélectionnées?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-fr/strings.xml" line="627" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;क्या आप वाकई चयनित सूचना को हटाना चाहते हैं?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-hi/strings.xml" line="627" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja remover a notificação selecionada?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt-rBR/strings.xml" line="627" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (0, 1), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Tem certeza de que deseja remover a notificação selecionada?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-pt/strings.xml" line="627" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Файл был успешно удалён.&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="630" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Da li ste sigurni da želite da otklonite odabrano obaveštenje?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-sr/strings.xml" line="648" column="9" />
+  </issue>
+  <issue id="ImpliedQuantity" message="The quantity `'one'` matches more than one specific number in this locale (1, 21, 31, 41, 51, 61, 71, 81, 101, 1001, …), but the message did not include a formatting argument (such as `%d`). This is usually an internationalization error. See full issue explanation for more." errorLine1="        &lt;item quantity=&quot;one&quot;&gt;Вы уверены, что хотите очистить выбранное уведомление?&lt;/item&gt;" errorLine2="        ^">
+    <location file="src/main/res/values-ru/strings.xml" line="669" column="9" />
+  </issue>
+</issues>

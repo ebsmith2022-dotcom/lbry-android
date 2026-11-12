@@ -295,11 +295,11 @@ public final class Lbryio {
         if (user != null) {
             currentUser = user;
             if (context != null) {
-                context.sendBroadcast(new Intent(MainActivity.ACTION_USER_AUTHENTICATION_SUCCESS));
+                context.sendBroadcast(new Intent(MainActivity.ACTION_USER_AUTHENTICATION_SUCCESS).setPackage(context.getPackageName()));
             }
         } else {
             if (context != null) {
-                context.sendBroadcast(new Intent(MainActivity.ACTION_USER_AUTHENTICATION_FAILED));
+                context.sendBroadcast(new Intent(MainActivity.ACTION_USER_AUTHENTICATION_FAILED).setPackage(context.getPackageName()));
             }
         }
     }
@@ -319,7 +319,7 @@ public final class Lbryio {
                 String encryptedAuthToken = Utils.encrypt(AUTH_TOKEN.getBytes(StandardCharsets.UTF_8), context, Lbry.KEYSTORE);
                 Intent intent = new Intent(MainActivity.ACTION_AUTH_TOKEN_GENERATED);
                 intent.putExtra("authToken", encryptedAuthToken);
-                context.sendBroadcast(intent);
+                context.sendBroadcast(intent.setPackage(context.getPackageName()));
             }
         } catch (Exception ex) {
             Log.e(TAG, "Error sending encrypted auth token action broadcast", ex);

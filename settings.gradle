@@ -1,2 +1,4 @@
 rootProject.name='LBRY'
 include ':app'
+
+include ':sdk'

@@ -16,7 +16,7 @@ import androidx.annotation.Nullable;
 
 import io.lbry.browser.R;
 
-public class CreditsBalanceView extends TextView {
+public class CreditsBalanceView extends androidx.appcompat.widget.AppCompatTextView {
     float textFontSize;
     private float iconSize;
     Rect r;

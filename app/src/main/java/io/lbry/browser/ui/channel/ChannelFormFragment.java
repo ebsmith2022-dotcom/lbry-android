@@ -375,23 +375,11 @@ public class ChannelFormFragment extends BaseFragment implements
     }
 
     public void checkPermissionsAndLaunchFilePicker(boolean isCover) {
-        Context context = getContext();
-        if (MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
-            launchCoverSelectPending = false;
-            launchThumbnailSelectPending = false;
-
-            coverFilePickerActive = isCover;
-            thumbnailFilePickerActive = !isCover;
-            launchFilePicker();
-        } else {
-            launchCoverSelectPending = isCover;
-            launchThumbnailSelectPending = !isCover;
-            MainActivity.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    MainActivity.REQUEST_STORAGE_PERMISSION,
-                    getString(R.string.storage_permission_rationale_images),
-                    context,
-                    true);
-        }
+        launchCoverSelectPending = false;
+        launchThumbnailSelectPending = false;
+        coverFilePickerActive = isCover;
+        thumbnailFilePickerActive = !isCover;
+        launchFilePicker();
     }
 
     private void launchFilePicker() {

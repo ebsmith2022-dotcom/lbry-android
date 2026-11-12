@@ -73,7 +73,7 @@ public class FirstRunActivity extends AppCompatActivity {
                 }
             }
         };
-        registerReceiver(sdkReceiver, filter);
+        androidx.core.content.ContextCompat.registerReceiver(this, sdkReceiver, filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
 
         CheckInstallIdTask task = new CheckInstallIdTask(this, new CheckInstallIdTask.InstallIdHandler() {
             @Override
@@ -120,7 +120,7 @@ public class FirstRunActivity extends AppCompatActivity {
                 }
             }
         };
-        registerReceiver(authReceiver, filter);
+        androidx.core.content.ContextCompat.registerReceiver(this, authReceiver, filter, androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
     private void handleAuthenticationSuccess() {

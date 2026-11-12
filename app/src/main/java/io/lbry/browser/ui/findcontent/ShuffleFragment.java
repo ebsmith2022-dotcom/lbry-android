@@ -82,7 +82,7 @@ public class ShuffleFragment extends BaseFragment {
     private boolean isPlaying;
     private boolean newPlayerCreated;
     private String currentUrl;
-    private Player.EventListener playerListener;
+    private Player.Listener playerListener;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -91,7 +91,7 @@ public class ShuffleFragment extends BaseFragment {
         surfModeLoading = root.findViewById(R.id.shuffle_loading);
         textTitle = root.findViewById(R.id.shuffle_content_title);
         textPublisher = root.findViewById(R.id.shuffle_content_publisher);
-        playerListener = new Player.EventListener() {
+        playerListener = new Player.Listener() {
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
                 if (playbackState == Player.STATE_READY) {
@@ -439,14 +439,14 @@ public class ShuffleFragment extends BaseFragment {
         if (MainActivity.appPlayer == null && context != null) {
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.CONTENT_TYPE_MOVIE)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build();
 
             MainActivity.appPlayer = new SimpleExoPlayer.Builder(context).build();
             MainActivity.appPlayer.setWakeMode(C.WAKE_MODE_NETWORK);
             MainActivity.appPlayer.setAudioAttributes(audioAttributes, true);
-            MainActivity.playerCache =
-                    new SimpleCache(context.getCacheDir(),
+            if (MainActivity.playerCache == null) MainActivity.playerCache =
+                    new SimpleCache(new java.io.File(context.getCacheDir(), "media"),
                             new LeastRecentlyUsedCacheEvictor(1024 * 1024 * 256), new ExoDatabaseProvider(context));
             if (context instanceof MainActivity) {
                 MainActivity activity = (MainActivity) context;
@@ -510,7 +510,8 @@ public class ShuffleFragment extends BaseFragment {
         startTimeMillis = 0;
 
         /*if (MainActivity.appPlayer != null) {
-            MainActivity.appPlayer.stop(true);
+            MainActivity.appPlayer.stop();
+            MainActivity.appPlayer.clearMediaItems();
             MainActivity.appPlayer.removeListener(fileViewPlayerListener);
             PlaybackParameters params = new PlaybackParameters(1.0f);
             MainActivity.appPlayer.setPlaybackParameters(params);

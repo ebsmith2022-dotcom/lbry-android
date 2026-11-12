@@ -54,7 +54,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.DefaultControlDispatcher;
 import com.google.android.exoplayer2.ParserException;
 import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.ExoPlaybackException;
@@ -71,11 +70,11 @@ import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException;
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy;
 import com.google.android.exoplayer2.upstream.Loader;
-import com.google.android.exoplayer2.upstream.cache.CacheDataSourceFactory;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.android.exoplayer2.util.Util;
@@ -214,7 +213,7 @@ public class FileViewFragment extends BaseFragment implements
     private ClaimListAdapter relatedContentAdapter;
     private CommentListAdapter commentListAdapter;
     private BroadcastReceiver sdkReceiver;
-    private Player.EventListener fileViewPlayerListener;
+    private Player.Listener fileViewPlayerListener;
 
     private long elapsedDuration = 0;
     private long totalDuration = 0;
@@ -310,7 +309,7 @@ public class FileViewFragment extends BaseFragment implements
 
         initUi(root);
 
-        fileViewPlayerListener = new Player.EventListener() {
+        fileViewPlayerListener = new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(@Player.State int playbackState) {
                 if (playbackState == Player.STATE_READY) {
@@ -372,11 +371,11 @@ public class FileViewFragment extends BaseFragment implements
             }
 
             @Override
-            public void onPlayerError(ExoPlaybackException error) {
+            public void onPlayerError(com.google.android.exoplayer2.PlaybackException error) {
                 View view = getView();
                 if (view != null && claim != null && claim == MainActivity.nowPlayingClaim
-                        && error.type == ExoPlaybackException.TYPE_SOURCE
-                        && isRateLimited(error.getSourceException())) {
+                        && error instanceof ExoPlaybackException && ((ExoPlaybackException) error).type == ExoPlaybackException.TYPE_SOURCE
+                        && isRateLimited(((ExoPlaybackException) error).getSourceException())) {
                     hideBuffering();
                     Snackbar.make(view, R.string.playback_rate_limited, Snackbar.LENGTH_LONG).show();
                 }
@@ -403,7 +402,7 @@ public class FileViewFragment extends BaseFragment implements
             activity.addPIPModeListener(this);
             activity.addScreenOrientationListener(this);
             activity.addWalletBalanceListener(this);
-            if (!MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
+            if (!(android.os.Build.VERSION.SDK_INT >= 29 || MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context))) {
                 activity.addStoragePermissionListener(this);
             }
         }
@@ -890,7 +889,7 @@ public class FileViewFragment extends BaseFragment implements
                         checkIsFollowing();
 
                         if (context != null) {
-                            context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE));
+                            context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE).setPackage(context.getPackageName()));
                         }
                     }
 
@@ -951,7 +950,7 @@ public class FileViewFragment extends BaseFragment implements
 
                     // Save shared user state
                     if (context != null) {
-                        context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE));
+                        context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE).setPackage(context.getPackageName()));
                     }
                 }
 
@@ -1207,7 +1206,7 @@ public class FileViewFragment extends BaseFragment implements
                         intent.putExtra("nativeDelete", true);
                         Context context = getContext();
                         if (context != null) {
-                            context.sendBroadcast(intent);
+                            context.sendBroadcast(intent.setPackage(context.getPackageName()));
                         }
                     } else {
                         checkStoragePermissionAndStartDownload();
@@ -1237,14 +1236,6 @@ public class FileViewFragment extends BaseFragment implements
         View playbackSpeedContainer = playerView.findViewById(R.id.player_playback_speed);
         TextView textPlaybackSpeed = playerView.findViewById(R.id.player_playback_speed_label);
         textPlaybackSpeed.setText(DEFAULT_PLAYBACK_SPEED);
-
-        playerView.setControlDispatcher(new DefaultControlDispatcher() {
-            @Override
-            public boolean dispatchSetPlayWhenReady(Player player, boolean playWhenReady) {
-                isPlaying = playWhenReady;
-                return super.dispatchSetPlayWhenReady(player, playWhenReady);
-            }
-        });
 
         playbackSpeedContainer.setOnCreateContextMenuListener(new View.OnCreateContextMenuListener() {
             @Override
@@ -1395,7 +1386,7 @@ public class FileViewFragment extends BaseFragment implements
 
     private void checkStoragePermissionAndStartDownload() {
         Context context = getContext();
-        if (MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
+        if ((android.os.Build.VERSION.SDK_INT >= 29 || MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context))) {
             startDownload();
         } else {
             if (storagePermissionRefusedOnce) {
@@ -1416,7 +1407,7 @@ public class FileViewFragment extends BaseFragment implements
 
     private void checkStoragePermissionAndFileGet() {
         Context context = getContext();
-        if (!MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
+        if (!(android.os.Build.VERSION.SDK_INT >= 29 || MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context))) {
             if (storagePermissionRefusedOnce) {
                 showStoragePermissionRefusedError();
                 restoreMainActionButton();
@@ -1797,15 +1788,15 @@ public class FileViewFragment extends BaseFragment implements
         if (MainActivity.appPlayer == null && context != null) {
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setUsage(C.USAGE_MEDIA)
-                    .setContentType(C.CONTENT_TYPE_MOVIE)
+                    .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
                     .build();
 
             MainActivity.appPlayer = new SimpleExoPlayer.Builder(context).build();
             MainActivity.appPlayer.setWakeMode(C.WAKE_MODE_NETWORK);
 
             MainActivity.appPlayer.setAudioAttributes(audioAttributes, true);
-            MainActivity.playerCache =
-                    new SimpleCache(context.getCacheDir(),
+            if (MainActivity.playerCache == null) MainActivity.playerCache =
+                    new SimpleCache(new java.io.File(context.getCacheDir(), "media"),
                             new LeastRecentlyUsedCacheEvictor(1024 * 1024 * 256), new ExoDatabaseProvider(context));
             if (context instanceof MainActivity) {
                 MainActivity activity = (MainActivity) context;
@@ -1910,25 +1901,25 @@ public class FileViewFragment extends BaseFragment implements
             Log.d("LbryPlaybackProbe", "Selected stream host: " + mediaUri.getHost());
         }
         String userAgent = Util.getUserAgent(context, context.getString(R.string.app_name));
-        DefaultHttpDataSourceFactory httpFactory = new DefaultHttpDataSourceFactory(userAgent);
+        DefaultHttpDataSource.Factory httpFactory = new DefaultHttpDataSource.Factory().setUserAgent(userAgent);
         if ("https".equals(mediaUri.getScheme()) && "player.odycdn.com".equals(mediaUri.getAuthority())) {
-            httpFactory.getDefaultRequestProperties().set("Referer", "https://odysee.com/");
+            httpFactory.setDefaultRequestProperties(java.util.Collections.singletonMap("Referer", "https://odysee.com/"));
         }
-        CacheDataSourceFactory dataSource = new CacheDataSourceFactory(
-                MainActivity.playerCache, new DefaultDataSourceFactory(context, httpFactory));
+        CacheDataSource.Factory dataSource = new CacheDataSource.Factory().setCache(MainActivity.playerCache)
+                .setUpstreamDataSourceFactory(new DefaultDataSourceFactory(context, httpFactory));
         player.setMediaSource(createStreamSource(mediaUri, dataSource), true);
         player.prepare();
     }
 
     static MediaSource createStreamSource(Uri mediaUri, DataSource.Factory dataSource) {
         StreamLoadErrorPolicy errorPolicy = new StreamLoadErrorPolicy();
-        if (Util.inferContentType(mediaUri) == C.TYPE_HLS) {
+        if (Util.inferContentType(mediaUri) == C.CONTENT_TYPE_HLS) {
             return new HlsMediaSource.Factory(dataSource)
                     .setLoadErrorHandlingPolicy(errorPolicy)
                     .createMediaSource(MediaItem.fromUri(mediaUri));
         }
         return new ProgressiveMediaSource.Factory(dataSource, new DefaultExtractorsFactory())
-                .setLoadErrorHandlingPolicy(errorPolicy).createMediaSource(mediaUri);
+                .setLoadErrorHandlingPolicy(errorPolicy).createMediaSource(MediaItem.fromUri(mediaUri));
     }
 
     private void setCurrentPlayer(Player currentPlayer) {
@@ -1959,7 +1950,8 @@ public class FileViewFragment extends BaseFragment implements
                 playbackPositionMs = previousPlayer.getCurrentPosition();
                 playWhenReady = previousPlayer.getPlayWhenReady();
             }
-            previousPlayer.stop(true);
+            previousPlayer.stop();
+            previousPlayer.clearMediaItems();
         }
 
         this.currentPlayer = currentPlayer;
@@ -2214,7 +2206,7 @@ public class FileViewFragment extends BaseFragment implements
                         intent.putExtra("outpoint", outpoint);
                         Context context = getContext();
                         if (context != null) {
-                            context.sendBroadcast(intent);
+                            context.sendBroadcast(intent.setPackage(context.getPackageName()));
                         }
                     } else {
                         // streaming
@@ -2724,7 +2716,8 @@ public class FileViewFragment extends BaseFragment implements
         isPlaying = false;
 
         if (MainActivity.appPlayer != null) {
-            MainActivity.appPlayer.stop(true);
+            MainActivity.appPlayer.stop();
+            MainActivity.appPlayer.clearMediaItems();
             MainActivity.appPlayer.removeListener(fileViewPlayerListener);
             PlaybackParameters params = new PlaybackParameters(1.0f);
             MainActivity.appPlayer.setPlaybackParameters(params);
@@ -2965,39 +2958,8 @@ public class FileViewFragment extends BaseFragment implements
                     downloadProgressView.setProgress(100);
                     Helper.setViewVisibility(downloadProgressView, View.GONE);
 
-                    // Copy file to shared Downloads folder
-                    // TODO Assign this folder when downloading instead of copying the file
-
-                    File fileFolder;
-
-                    if (claimFile.getMimeType().contains("video"))
-                        fileFolder = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES);
-                    else if (claimFile.getMimeType().contains("image") || claimFile.getMimeType().contains("picture"))
-                        fileFolder = Environment.getExternalStoragePublicDirectory(DIRECTORY_PICTURES);
-                    else
-                        fileFolder = Environment.getExternalStoragePublicDirectory(DIRECTORY_DOWNLOADS);
-
-                    InputStream in = null;
-                    OutputStream out;
-                    try {
-                        in = new FileInputStream(claimFile.getDownloadPath());
-
-                        out = new FileOutputStream(new File(fileFolder, claimFile.getFileName()));
-
-                        byte[] buf = new byte[1024];
-                        int len;
-
-                        while ((len = in.read(buf)) > 0) {
-                            out.write(buf, 0, len);
-                        }
-
-                        in.close();
-                        out.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-
+                    io.lbry.browser.utils.DocumentFiles.exportDownload(
+                            getContext(), claimFile.getDownloadPath(), claimFile.getFileName(), claimFile.getMimeType());
 
                     playOrViewMedia();
                 }

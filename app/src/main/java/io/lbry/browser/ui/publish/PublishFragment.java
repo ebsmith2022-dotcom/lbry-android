@@ -205,30 +205,14 @@ public class PublishFragment extends BaseFragment implements
     }
 
     private void checkStoragePermissionAndLaunchFilePicker() {
-        if (!Lbry.SDK_READY) {
-            Snackbar.make(getView(), R.string.sdk_initializing_functionality, Snackbar.LENGTH_LONG).show();
-            return;
-        }
-
-        Context context = getContext();
-        if (MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
-            launchFilePickerPending = false;
-            launchFilePicker();
-        } else {
-            launchFilePickerPending = true;
-            MainActivity.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    MainActivity.REQUEST_STORAGE_PERMISSION,
-                    getString(R.string.storage_permission_rationale_images),
-                    context,
-                    true);
-        }
+        launchFilePicker();
     }
 
     private void launchFilePicker() {
         Context context = getContext();
         if (context instanceof MainActivity) {
             MainActivity.startingFilePickerActivity = true;
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE);
             intent.setType("*/*");
             ((MainActivity) context).startActivityForResult(
                     Intent.createChooser(intent, getString(R.string.upload_file)),
@@ -278,6 +262,11 @@ public class PublishFragment extends BaseFragment implements
     }
 
     private void checkStoragePermissionAndLoadVideos() {
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            // Modern Android grants access through the system document picker.
+            Helper.setViewVisibility(noVideosLoaded, View.VISIBLE);
+            return;
+        }
         Context context = getContext();
         if (MainActivity.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE, context)) {
             loadGalleryItems();

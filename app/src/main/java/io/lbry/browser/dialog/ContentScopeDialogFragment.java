@@ -74,10 +74,8 @@ public class ContentScopeDialogFragment extends BottomSheetDialogFragment {
                 }
             }
 
-            switch (view.getId()) {
-                case R.id.content_scope_everyone_item: scopeItem = ITEM_EVERYONE; break;
-                case R.id.content_scope_tags_item: scopeItem = ITEM_TAGS; break;
-            }
+            if (view.getId() == R.id.content_scope_everyone_item) { scopeItem = ITEM_EVERYONE; }
+            else if (view.getId() == R.id.content_scope_tags_item) { scopeItem = ITEM_TAGS; }
 
             checkSelectedScopeItem(scopeItem, view);
             if (listener != null) {

@@ -77,11 +77,9 @@ public class ContentSortDialogFragment extends BottomSheetDialogFragment {
                 }
             }
 
-            switch (view.getId()) {
-                case R.id.sort_by_trending_item: selectedSortByItem = ITEM_SORT_BY_TRENDING; break;
-                case R.id.sort_by_new_item: selectedSortByItem = ITEM_SORT_BY_NEW; break;
-                case R.id.sort_by_top_item: selectedSortByItem = ITEM_SORT_BY_TOP; break;
-            }
+            if (view.getId() == R.id.sort_by_trending_item) { selectedSortByItem = ITEM_SORT_BY_TRENDING; }
+            else if (view.getId() == R.id.sort_by_new_item) { selectedSortByItem = ITEM_SORT_BY_NEW; }
+            else if (view.getId() == R.id.sort_by_top_item) { selectedSortByItem = ITEM_SORT_BY_TOP; }
 
             checkSelectedSortByItem(selectedSortByItem, view);
             if (listener != null) {

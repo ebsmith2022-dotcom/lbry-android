@@ -85,7 +85,7 @@ public class LbrynetMessagingService extends FirebaseMessagingService {
                 DatabaseHelper.createOrUpdateNotification(lnotification, db);
 
                 // send a broadcast
-                Intent intent = new Intent(ACTION_NOTIFICATION_RECEIVED);
+                Intent intent = new Intent(ACTION_NOTIFICATION_RECEIVED).setPackage(getPackageName());
                 intent.putExtra("title", title);
                 intent.putExtra("body", body);
                 intent.putExtra("url", url);
@@ -140,7 +140,7 @@ public class LbrynetMessagingService extends FirebaseMessagingService {
         Intent launchIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
         launchIntent.putExtra("notification_name", name);
         launchIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_ONE_SHOT);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
 
         Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
         NotificationCompat.Builder notificationBuilder =

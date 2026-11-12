@@ -1,0 +1,29 @@
+apply plugin: 'com.android.library'
+android {
+    namespace 'io.lbry.lbrysdk'
+    compileSdk 37
+    defaultConfig { minSdk 24 }
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+def upstream = configurations.create('upstreamSdk') { canBeConsumed = false; transitive = false }
+def generated = layout.buildDirectory.dir('generated/upstreamSdk').get().asFile
+def prepare = tasks.register('prepareUpstreamSdk', Exec) {
+    inputs.files(upstream)
+    inputs.file(rootProject.file('scripts/prepare-sdk.py'))
+    outputs.dir(generated)
+    doFirst { commandLine 'python3', rootProject.file('scripts/prepare-sdk.py'), upstream.singleFile, generated }
+}
+android.sourceSets.main.jniLibs.srcDir(new File(generated, 'jni'))
+android.sourceSets.main.res.srcDir(new File(generated, 'res'))
+android.sourceSets.main.assets.srcDir(new File(generated, 'assets'))
+tasks.named('preBuild').configure { dependsOn(prepare) }
+dependencies {
+    upstreamSdk 'io.lbry:lbrysdk64:0.102.0@aar'
+    api files(new File(generated, 'runtime.jar')).builtBy(prepare)
+    implementation 'androidx.core:core:1.15.0'
+    implementation 'androidx.preference:preference:1.1.1'
+}

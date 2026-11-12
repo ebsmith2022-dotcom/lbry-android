@@ -33,13 +33,13 @@ public class LbryAnalytics {
     private static FirebaseAnalytics analytics;
 
     public static void init(Context context) {
-        analytics = FirebaseAnalytics.getInstance(context);
+        if (!com.google.firebase.FirebaseApp.getApps(context).isEmpty()) {
+            analytics = FirebaseAnalytics.getInstance(context);
+        }
     }
 
     public static void checkInitAnalytics(Context context) {
-        if (analytics == null && context != null) {
-            analytics = FirebaseAnalytics.getInstance(context);
-        }
+        if (analytics == null && context != null) init(context);
     }
 
     public static void setCurrentScreen(Activity activity, String name, String className) {

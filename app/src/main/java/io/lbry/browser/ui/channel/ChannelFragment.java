@@ -247,7 +247,7 @@ public class ChannelFragment extends BaseFragment implements FetchChannelsListen
                             checkIsFollowing();
 
                             if (context != null) {
-                                context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE));
+                                context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE).setPackage(context.getPackageName()));
                             }
                         }
 
@@ -312,7 +312,7 @@ public class ChannelFragment extends BaseFragment implements FetchChannelsListen
 
                 Context context = getContext();
                 if (context != null) {
-                    context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE));
+                    context.sendBroadcast(new Intent(MainActivity.ACTION_SAVE_SHARED_USER_STATE).setPackage(context.getPackageName()));
                 }
             }
 

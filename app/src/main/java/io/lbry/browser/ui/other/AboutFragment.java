@@ -39,7 +39,7 @@ import io.lbry.lbrysdk.Utils;
 
 public class AboutFragment extends BaseFragment implements SdkStatusListener {
 
-    private static final String FILE_PROVIDER = "io.lbry.browser.fileprovider";
+    private static final String FILE_PROVIDER = io.lbry.browser.BuildConfig.APPLICATION_ID + ".fileprovider";
 
     private TextView textLinkWhatIsLBRY;
     private TextView textLinkAndroidBasics;
@@ -117,7 +117,7 @@ public class AboutFragment extends BaseFragment implements SdkStatusListener {
         linkUpdateMailingPreferences.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(String.format("http://lbry.com/list/edit/%s", Lbryio.AUTH_TOKEN)));
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(String.format("https://lbry.com/list/edit/%s", Lbryio.AUTH_TOKEN)));
                 startActivity(intent);
             }
         });
@@ -196,12 +196,15 @@ public class AboutFragment extends BaseFragment implements SdkStatusListener {
                 onSdkReady();
             }
         }
+        if (context != null && !com.google.firebase.FirebaseApp.getApps(context).isEmpty()) {
         FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
             @Override
             public void onComplete(Task<InstanceIdResult> task) {
                 Helper.setViewText(textFirebaseToken, task.isSuccessful() ? task.getResult().getToken() : getString(R.string.unknown));
             }
         });
+        }
+
 
     }
 

@@ -87,13 +87,11 @@ public class ContentFromDialogFragment extends BottomSheetDialogFragment {
                 }
             }
 
-            switch (view.getId()) {
-                case R.id.content_from_past_24_hours_item: currentFromItem = ITEM_FROM_PAST_24_HOURS; break;
-                case R.id.content_from_past_week_item: currentFromItem = ITEM_FROM_PAST_WEEK; break;
-                case R.id.content_from_past_month_item: currentFromItem = ITEM_FROM_PAST_MONTH; break;
-                case R.id.content_from_past_year_item: currentFromItem = ITEM_FROM_PAST_YEAR; break;
-                case R.id.content_from_all_time_item: currentFromItem = ITEM_FROM_ALL_TIME; break;
-            }
+            if (view.getId() == R.id.content_from_past_24_hours_item) { currentFromItem = ITEM_FROM_PAST_24_HOURS; }
+            else if (view.getId() == R.id.content_from_past_week_item) { currentFromItem = ITEM_FROM_PAST_WEEK; }
+            else if (view.getId() == R.id.content_from_past_month_item) { currentFromItem = ITEM_FROM_PAST_MONTH; }
+            else if (view.getId() == R.id.content_from_past_year_item) { currentFromItem = ITEM_FROM_PAST_YEAR; }
+            else if (view.getId() == R.id.content_from_all_time_item) { currentFromItem = ITEM_FROM_ALL_TIME; }
 
             checkSelectedFromItem(currentFromItem, view);
             if (listener != null) {
