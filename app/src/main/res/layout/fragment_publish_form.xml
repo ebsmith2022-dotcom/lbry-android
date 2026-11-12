@@ -72,6 +72,14 @@
                 </RelativeLayout>
             </RelativeLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/publish_form_choose_thumbnail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp"
+                android:text="@string/choose_custom_thumbnail" />
+
             <include layout="@layout/card_reward_driver"
                 android:visibility="gone"
                 android:layout_width="match_parent"

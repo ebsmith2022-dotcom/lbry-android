@@ -47,7 +47,7 @@ android {
             minSdkVersion 24
             // Refresh the extracted SDK code when installing over an earlier debug APK.
             resValue 'string', 'private_version', '0.102.0-android-wallet-hub-1'
-            versionCode android.defaultConfig.versionCode * 10 + 3
+            versionCode android.defaultConfig.versionCode * 10 + 4
             ndk {
                 abiFilter "arm64-v8a"
             }
@@ -62,7 +62,7 @@ android {
             resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret")}\""
         }
         release {
-            versionNameSuffix "-fork.2"
+            versionNameSuffix "-fork.3-test"
             Properties twitterProps = new Properties()
             twitterProps.load(project.file('twitter.properties').newDataInputStream())
             resValue "string", "TWITTER_CONSUMER_KEY",  "\"${twitterProps.getProperty("twitterConsumerKey")}\""

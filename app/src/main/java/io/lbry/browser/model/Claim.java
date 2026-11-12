@@ -515,8 +515,7 @@ public class Claim {
         private String appendedPath = "";
 
         public ImageCDNUrl(int width, int height, int quality, @Nullable String format, String thumbnailUrl) {
-            if (width != 0 && height != 0)
-                appendedPath = "s:".concat(String.valueOf(width)).concat(":").concat(String.valueOf(height)).concat("/");
+            appendedPath = "s:".concat(String.valueOf(width)).concat(":").concat(String.valueOf(height)).concat("/");
 
             appendedPath = appendedPath.concat("quality:").concat(String.valueOf(quality)).concat("/");
 
@@ -528,7 +527,7 @@ public class Claim {
 
         @Override
         public String toString() {
-            String url = "https://image-processor.vanwanet.com/optimize/";
+            String url = "https://thumbnails.odycdn.com/optimize/";
             return url.concat(appendedPath);
         }
     }

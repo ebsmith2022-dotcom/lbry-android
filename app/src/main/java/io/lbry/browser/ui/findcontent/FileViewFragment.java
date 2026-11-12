@@ -685,7 +685,7 @@ public class FileViewFragment extends BaseFragment implements
                 }
             }
 
-            if (!Helper.isNullOrEmpty(lbryFile.getStreamingUrl()) && (!claim.isFree() || !Lbryio.isSignedIn())) {
+            if (!Helper.isNullOrEmpty(lbryFile.getStreamingUrl())) {
                 return lbryFile.getStreamingUrl();
             }
         }
@@ -2154,14 +2154,6 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     private void handleMainActionForClaim() {
-        if (claim.isPlayable() && claim.isFree() && Lbryio.isSignedIn())  {
-            // always use lbry.tv streaming when signed in and playabble
-            startTimeMillis = System.currentTimeMillis();
-            showExoplayerView();
-            playMedia();
-            return;
-        }
-
         if (Lbry.SDK_READY) {
             // Check if the file already exists for the claim
             if (claim.getFile() != null) {

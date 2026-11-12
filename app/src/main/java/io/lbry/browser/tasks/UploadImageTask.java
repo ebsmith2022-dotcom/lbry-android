@@ -9,6 +9,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 import java.io.File;
+import java.util.Locale;
+import okhttp3.ResponseBody;
+import okhttp3.HttpUrl;
 import java.util.concurrent.TimeUnit;
 
 import io.lbry.browser.exceptions.LbryResponseException;
@@ -39,42 +42,38 @@ public class UploadImageTask extends AsyncTask<Void, Void, String> {
         String thumbnailUrl = null;
         try {
             File file = new File(filePath);
-            String fileName = file.getName();
-            int dotIndex = fileName.lastIndexOf('.');
-            String extension = "jpg";
-            if (dotIndex > -1) {
-                extension = fileName.substring(dotIndex + 1);
+            if (!file.isFile() || !file.canRead()) {
+                throw new IOException("The selected image cannot be read.");
             }
-            String fileType = String.format("image/%s", extension);
-            RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM).
-                    addFormDataPart("name", Helper.makeid(24)).
-                    addFormDataPart("file", fileName, RequestBody.create(file, MediaType.parse(fileType))).
-                    build();
-            Request request = new Request.Builder().url("https://spee.ch/api/claim/publish").post(body).build();
-            OkHttpClient client = new OkHttpClient.Builder().
-                    writeTimeout(300, TimeUnit.SECONDS).
-                    readTimeout(300, TimeUnit.SECONDS).
-                    build();
-            Response response = client.newCall(request).execute();
-            JSONObject json = new JSONObject(response.body().string());
-            if (json.has("success") && Helper.getJSONBoolean("success", false, json)) {
-                JSONObject data = json.getJSONObject("data");
-                String url = Helper.getJSONString("url", null, data);
-                if (Helper.isNullOrEmpty(url)) {
-                    throw new LbryResponseException("Invalid thumbnail url returned after upload.");
+            String fileName = file.getName();
+            String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+            String fileType = "jpg".equals(extension) ? "image/jpeg" : "image/" + extension;
+            RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                    .addFormDataPart("upload", "Upload")
+                    .addFormDataPart("file-input", fileName, RequestBody.create(file, MediaType.parse(fileType)))
+                    .build();
+            Request request = new Request.Builder()
+                    .url("https://thumbs.odycdn.com/upload").post(body).build();
+            OkHttpClient client = new OkHttpClient.Builder()
+                    .callTimeout(90, TimeUnit.SECONDS)
+                    .writeTimeout(60, TimeUnit.SECONDS)
+                    .readTimeout(60, TimeUnit.SECONDS)
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                ResponseBody responseBody = response.body();
+                if (!response.isSuccessful() || responseBody == null) {
+                    throw new IOException("Image upload failed (HTTP " + response.code() + ").");
                 }
-
-                thumbnailUrl = String.format("%s.%s", url, extension);
-            } else if (json.has("error") || json.has("message")) {
-                JSONObject error = Helper.getJSONObject("error", json);
-                String message = null;
-                if (error != null) {
-                    message = Helper.getJSONString("message", null, error);
+                JSONObject json = new JSONObject(responseBody.string());
+                if (!"success".equals(json.optString("type"))) {
+                    throw new LbryResponseException("The image upload service rejected this image.");
                 }
-                if (Helper.isNullOrEmpty(message)) {
-                    message  = Helper.getJSONString("message", null, json);
+                String url = json.optString("message");
+                HttpUrl imageUrl = HttpUrl.parse(url);
+                if (imageUrl == null || !imageUrl.isHttps()) {
+                    throw new LbryResponseException("Invalid image URL returned after upload.");
                 }
-                throw new LbryResponseException(Helper.isNullOrEmpty(message) ? "The image failed to upload." : message);
+                thumbnailUrl = imageUrl.toString();
             }
         } catch (IOException | JSONException | LbryResponseException ex) {
             error = ex;

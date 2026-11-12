@@ -49,6 +49,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.IOException;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -214,6 +216,7 @@ public class PublishFormFragment extends BaseFragment implements
         switchPrice = root.findViewById(R.id.publish_form_price_switch);
         uploadProgress = root.findViewById(R.id.publish_form_thumbnail_upload_progress);
         imageThumbnail = root.findViewById(R.id.publish_form_thumbnail_preview);
+        root.findViewById(R.id.publish_form_choose_thumbnail).setOnClickListener(view -> launchFilePicker());
         linkGenerateAddress = root.findViewById(R.id.publish_form_generate_address);
 
         inputTitle = root.findViewById(R.id.publish_form_input_title);
@@ -361,7 +364,7 @@ public class PublishFormFragment extends BaseFragment implements
         mediaContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                checkStoragePermissionAndLaunchFilePicker();
+                launchFilePicker();
             }
         });
 
@@ -566,16 +569,77 @@ public class PublishFormFragment extends BaseFragment implements
         }
     }
 
+    private static final int REQUEST_CUSTOM_THUMBNAIL = 3010;
+
     private void launchFilePicker() {
-        Context context = getContext();
-        if (context instanceof MainActivity) {
-            MainActivity.startingFilePickerActivity = true;
-            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-            intent.setType("image/*");
-            ((MainActivity) context).startActivityForResult(
-                    Intent.createChooser(intent, getString(R.string.select_thumbnail)),
-                    MainActivity.REQUEST_FILE_PICKER);
+        if (uploading) {
+            showError(getString(R.string.wait_for_upload));
+            return;
         }
+        MainActivity.startingFilePickerActivity = true;
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("image/*");
+        startActivityForResult(intent, REQUEST_CUSTOM_THUMBNAIL);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_CUSTOM_THUMBNAIL) {
+            return;
+        }
+        MainActivity.startingFilePickerActivity = false;
+        if (resultCode != android.app.Activity.RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        Context context = getContext();
+        if (context == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        uploading = true;
+        uploadProgress.setVisibility(View.VISIBLE);
+        AsyncTask.execute(() -> {
+            File image = null;
+            boolean copied = false;
+            try {
+                String mime = context.getContentResolver().getType(uri);
+                String extension = mime == null ? null : MimeTypeMap.getSingleton().getExtensionFromMimeType(mime);
+                if (extension == null) {
+                    throw new IOException("Unsupported image type");
+                }
+                image = File.createTempFile("custom-thumbnail-", "." + extension, context.getCacheDir());
+                try (InputStream input = context.getContentResolver().openInputStream(uri);
+                     FileOutputStream output = new FileOutputStream(image)) {
+                    if (input == null) {
+                        throw new IOException("Cannot read selected image");
+                    }
+                    byte[] buffer = new byte[8192];
+                    int count;
+                    while ((count = input.read(buffer)) != -1) {
+                        output.write(buffer, 0, count);
+                    }
+                }
+                copied = image.length() > 0;
+            } catch (IOException | SecurityException error) {
+                // Show a localized error without exposing the document URI.
+            }
+            File selectedImage = image;
+            boolean success = copied;
+            new Handler(android.os.Looper.getMainLooper()).post(() -> {
+                uploading = false;
+                if (!isAdded() || getView() == null) {
+                    return;
+                }
+                uploadProgress.setVisibility(View.GONE);
+                if (success) {
+                    uploadThumbnail(selectedImage.getAbsolutePath());
+                } else {
+                    showError(getString(R.string.image_upload_failed));
+                }
+            });
+        });
     }
 
     private void updateFieldsFromCurrentClaim() {
