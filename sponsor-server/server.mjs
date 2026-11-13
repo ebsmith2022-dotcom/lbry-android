@@ -1,3 +1,4 @@
+import { installLikes } from './likes.mjs';
 import { analytics, localDay } from './analytics.mjs';
 import express from 'express';
 import sharp from 'sharp';
@@ -51,14 +52,16 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
       'Content-Security-Policy': "default-src 'self'; img-src 'self' blob:; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'" });
     if (publicOrigin && req.get('host') !== new URL(publicOrigin).host) return res.status(421).end();
     // Reject browser cross-origin mutations, including login. No CORS is enabled.
-    if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.path === '/v1/events' && req.method === 'POST')) {
+    if (req.method !== 'GET' && req.method !== 'HEAD' && !((req.path === '/v1/events' || req.path.startsWith('/v1/likes/')) && req.method === 'POST')) {
       const expected = publicOrigin || `${secure ? 'https' : 'http'}://${req.get('host')}`;
       if (req.get('origin') !== expected || req.get('x-dashboard') !== '1') return res.status(403).json({ error: 'Open the dashboard directly to make changes.' });
     }
     next();
   });
   const dashboardJson = express.json({ limit: '3mb' });
-  app.use((req, res, next) => req.path === '/v1/events' ? next() : dashboardJson(req, res, next));
+  app.use((req, res, next) => (req.path === '/v1/events' || req.path.startsWith('/v1/likes/')) ? next() : dashboardJson(req, res, next));
+  app.use('/v1/likes', express.json({ limit: '1kb' }));
+  installLikes(app, db);
   const sessionFor = req => {
     const cookie = (req.headers.cookie || '').split(';').map(s => s.trim()).find(s => s.startsWith('sponsor_session='));
     if (!cookie) return null;

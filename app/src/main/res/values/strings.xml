@@ -706,4 +706,12 @@
     <string name="sponsor_visit_title" translatable="false">Visit sponsor website?</string>
     <string name="sponsor_visit" translatable="false">Open website</string>
     <string name="sponsor_banner_description" translatable="false">Sponsored banner</string>
+    <string name="community_like_loading" translatable="false">Loading likes…</string>
+    <string name="community_like_retry" translatable="false">Retry likes</string>
+    <string name="community_like_count" translatable="false">♡ Like · %1$s</string>
+    <string name="community_liked_count" translatable="false">♥ Liked · %1$s</string>
+    <string name="community_likes_scope" translatable="false">LBRY Community likes · One per installation · Tap again to unlike</string>
+    <string name="community_likes_error" translatable="false">Could not confirm likes. Tap to refresh before trying again.</string>
+    <string name="community_like_accessibility" translatable="false">Like video. %1$d community likes.</string>
+    <string name="community_unlike_accessibility" translatable="false">Remove your like. %1$d community likes.</string>
 </resources>

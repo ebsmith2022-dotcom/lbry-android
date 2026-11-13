@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+ android:id="@+id/community_likes" android:layout_width="match_parent" android:layout_height="wrap_content"
+ android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="8dp" android:visibility="gone">
+ <Button android:id="@+id/community_like_button" android:layout_width="wrap_content" android:layout_height="wrap_content"
+  android:minHeight="48dp" android:textAllCaps="false" android:text="@string/community_like_loading" />
+ <TextView android:id="@+id/community_like_status" android:layout_width="match_parent" android:layout_height="wrap_content"
+  android:textSize="12sp" android:text="@string/community_likes_scope" android:accessibilityLiveRegion="polite" />
+</LinearLayout>

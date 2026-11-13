@@ -1,8 +1,8 @@
 
 apply plugin: 'com.android.application'
 
-// Disabled by default. Local HTTP is allowed only in debug builds for USB forwarding.
-def sponsorBase = providers.gradleProperty('sponsorBaseUrl').getOrElse('')
+// Public community service. Override with loopback only for isolated debug tests.
+def sponsorBase = providers.gradleProperty('sponsorBaseUrl').getOrElse('https://lbrycommunity-ads.duckdns.org')
 if (sponsorBase && !(sponsorBase ==~ /https:\/\/[^\s"\\]+/ || sponsorBase ==~ /http:\/\/127\.0\.0\.1(:[0-9]+)?/)) {
     throw new GradleException('sponsorBaseUrl must be HTTPS, or debug loopback HTTP.')
 }
@@ -25,8 +25,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase)
-        versionCode 1704
-        versionName "0.18.2"
+        versionCode 1705
+        versionName "0.18.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -56,7 +56,7 @@ android {
 
     buildTypes {
         debug {
-            versionNameSuffix "-sponsors-alpha.2"
+            versionNameSuffix "-community-alpha.3"
             Properties twitterProps = new Properties()
             if (project.file('twitter.properties').exists()) {
                 project.file('twitter.properties').withInputStream { twitterProps.load(it) }
@@ -66,7 +66,7 @@ android {
         }
         release {
             buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase.startsWith("https://") ? sponsorBase : "")
-            versionNameSuffix "-sponsors-alpha.2"
+            versionNameSuffix "-community-alpha.3"
             Properties twitterProps = new Properties()
             if (project.file('twitter.properties').exists()) {
                 project.file('twitter.properties').withInputStream { twitterProps.load(it) }

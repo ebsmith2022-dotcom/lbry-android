@@ -266,6 +266,8 @@
                         app:tint="@color/foreground" />
                 </RelativeLayout>
 
+                <include layout="@layout/community_likes" />
+
                 <LinearLayout
                     android:id="@+id/file_view_actions_area"
                     android:layout_width="match_parent"

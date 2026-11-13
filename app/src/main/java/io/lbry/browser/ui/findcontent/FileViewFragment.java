@@ -269,12 +269,14 @@ public class FileViewFragment extends BaseFragment implements
     private String commentHash;
 
     private float floatingWalletPositionY;
+    private io.lbry.browser.likes.LikeController communityLikes;
     private io.lbry.browser.sponsors.SponsorBannerController sponsorBanner;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_file_view, container, false);
         sponsorBanner = new io.lbry.browser.sponsors.SponsorBannerController(root);
+        communityLikes = new io.lbry.browser.likes.LikeController(root);
 
         layoutLoadingState = root.findViewById(R.id.file_view_loading_state);
         layoutNothingAtLocation = root.findViewById(R.id.container_nothing_at_location);
@@ -643,6 +645,7 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     private void onNewClaim(String url) {
+        if (communityLikes != null) communityLikes.bind(null);
         loadingNewClaim = true;
         initialFileLoadDone = false;
         playbackStarted = false;
@@ -784,6 +787,7 @@ public class FileViewFragment extends BaseFragment implements
     public void onResume() {
         super.onResume();
         if (sponsorBanner != null) sponsorBanner.start();
+        if (communityLikes != null) communityLikes.start();
         checkParams();
 
         Context context = getContext();
@@ -825,6 +829,7 @@ public class FileViewFragment extends BaseFragment implements
 
     public void onPause() {
         if (sponsorBanner != null) sponsorBanner.stop();
+        if (communityLikes != null) communityLikes.stop();
         if (MainActivity.appPlayer != null) {
             MainActivity.nowPlayingSource = MainActivity.SOURCE_NOW_PLAYING_FILE;
         }
@@ -853,6 +858,7 @@ public class FileViewFragment extends BaseFragment implements
     @Override
     public void onDestroyView() {
         if (sponsorBanner != null) { sponsorBanner.stop(); sponsorBanner = null; }
+        if (communityLikes != null) { communityLikes.stop(); communityLikes = null; }
         super.onDestroyView();
     }
 
@@ -1541,6 +1547,7 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     private void renderClaim() {
+        if (communityLikes != null) communityLikes.bind(claim != null && claim.isPlayable() ? claim.getClaimId() : null);
         if (claim == null) {
             return;
         }
