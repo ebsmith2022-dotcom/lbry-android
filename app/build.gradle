@@ -1,6 +1,12 @@
 
 apply plugin: 'com.android.application'
 
+// Disabled by default. Local HTTP is allowed only in debug builds for USB forwarding.
+def sponsorBase = providers.gradleProperty('sponsorBaseUrl').getOrElse('')
+if (sponsorBase && !(sponsorBase ==~ /https:\/\/[^\s"\\]+/ || sponsorBase ==~ /http:\/\/127\.0\.0\.1(:[0-9]+)?/)) {
+    throw new GradleException('sponsorBaseUrl must be HTTPS, or debug loopback HTTP.')
+}
+
 android {
     namespace 'io.lbry.browser'
     compileSdk 37
@@ -18,8 +24,9 @@ android {
         applicationId "com.ebsmith2022.lbrycommunity"
         minSdkVersion 21
         targetSdkVersion 36
-        versionCode 1702
-        versionName "0.18.0"
+        buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase)
+        versionCode 1703
+        versionName "0.18.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -49,6 +56,7 @@ android {
 
     buildTypes {
         debug {
+            versionNameSuffix "-sponsors-alpha.1"
             Properties twitterProps = new Properties()
             if (project.file('twitter.properties').exists()) {
                 project.file('twitter.properties').withInputStream { twitterProps.load(it) }
@@ -57,7 +65,8 @@ android {
             resValue "string", "TWITTER_CONSUMER_SECRET", "\"${twitterProps.getProperty("twitterConsumerSecret", "")}\""
         }
         release {
-            versionNameSuffix "-play-alpha.1"
+            buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase.startsWith("https://") ? sponsorBase : "")
+            versionNameSuffix "-sponsors-alpha.1"
             Properties twitterProps = new Properties()
             if (project.file('twitter.properties').exists()) {
                 project.file('twitter.properties').withInputStream { twitterProps.load(it) }

@@ -194,6 +194,8 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
+                <include layout="@layout/sponsor_banner" />
+
                 <include
                     layout="@layout/card_reward_driver"
                     android:layout_width="match_parent"

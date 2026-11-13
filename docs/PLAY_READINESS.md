@@ -1,5 +1,7 @@
 # LBRY Community — Play preparation checkpoint
 
+Google Play work paused by owner November 12, 2026. Current work is the independent fork sponsor prototype; see `../sponsor-server/README.md`. The build details below describe the earlier Play checkpoint.
+
 Status: engineering alpha; **not ready for Google Play submission or a public release**.
 Prepared November 11, 2026. The working GitHub release v0.17.1-fork.3 is unchanged.
 

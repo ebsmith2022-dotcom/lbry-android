@@ -269,10 +269,12 @@ public class FileViewFragment extends BaseFragment implements
     private String commentHash;
 
     private float floatingWalletPositionY;
+    private io.lbry.browser.sponsors.SponsorBannerController sponsorBanner;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_file_view, container, false);
+        sponsorBanner = new io.lbry.browser.sponsors.SponsorBannerController(root);
 
         layoutLoadingState = root.findViewById(R.id.file_view_loading_state);
         layoutNothingAtLocation = root.findViewById(R.id.container_nothing_at_location);
@@ -781,6 +783,7 @@ public class FileViewFragment extends BaseFragment implements
 
     public void onResume() {
         super.onResume();
+        if (sponsorBanner != null) sponsorBanner.start();
         checkParams();
 
         Context context = getContext();
@@ -821,6 +824,7 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     public void onPause() {
+        if (sponsorBanner != null) sponsorBanner.stop();
         if (MainActivity.appPlayer != null) {
             MainActivity.nowPlayingSource = MainActivity.SOURCE_NOW_PLAYING_FILE;
         }
@@ -844,6 +848,12 @@ public class FileViewFragment extends BaseFragment implements
         }
 
         closeWebView();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (sponsorBanner != null) { sponsorBanner.stop(); sponsorBanner = null; }
+        super.onDestroyView();
     }
 
     private void closeWebView() {

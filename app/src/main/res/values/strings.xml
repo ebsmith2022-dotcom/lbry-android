@@ -701,4 +701,9 @@
     <string name="fa_bell_slash" translatable="false">&#xf1f6;</string>
     <string name="playback_rate_limited">The streaming server is receiving too many requests. Try playing this video again in a few minutes.</string>
     <string name="choose_custom_thumbnail">Choose custom thumbnail</string>
+    <string name="sponsor_label" translatable="false">Sponsored · %1$s</string>
+    <string name="sponsor_open" translatable="false">Visit sponsor %1$s</string>
+    <string name="sponsor_visit_title" translatable="false">Visit sponsor website?</string>
+    <string name="sponsor_visit" translatable="false">Open website</string>
+    <string name="sponsor_banner_description" translatable="false">Sponsored banner</string>
 </resources>
