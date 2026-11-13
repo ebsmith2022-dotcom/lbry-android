@@ -123,11 +123,16 @@ public final class AutoplayController {
                 }
                 Collections.shuffle(candidates);
                 int attempts = 0;
+                int countsChecked = 0;
+                long countDeadline = android.os.SystemClock.elapsedRealtime() + 12000;
                 for (Claim c : candidates) {
                     if (!AutoplayPolicy.eligible(c, id, history, mature)) continue;
+                    if (++countsChecked > 20 || android.os.SystemClock.elapsedRealtime() >= countDeadline) break;
+                    if (!AutoplayViewCounts.hasEnoughViews(c.getClaimId())) continue;
                     if (++attempts > 5) break;
                     Claim resolved = Lbry.resolve(c.getPermanentUrl(), Lbry.LBRY_TV_CONNECTION_STRING);
-                    if (AutoplayPolicy.eligible(resolved, id, history, mature)) { return resolved; }
+                    if (AutoplayPolicy.eligible(resolved, id, history, mature)
+                            && c.getClaimId().equals(resolved.getClaimId())) { return resolved; }
                 }
         return null;
     }

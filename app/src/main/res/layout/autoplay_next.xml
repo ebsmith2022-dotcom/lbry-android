@@ -2,4 +2,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="8dp">
  <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay_next_switch" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/autoplay_next_title" />
  <TextView android:id="@+id/autoplay_next_mode" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:gravity="center_vertical" android:clickable="true" android:focusable="true" android:background="?attr/selectableItemBackground" android:text="@string/autoplay_random" />
+ <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="12sp" android:text="@string/autoplay_minimum_views" />
 </LinearLayout>
