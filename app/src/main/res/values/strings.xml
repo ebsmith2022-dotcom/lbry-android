@@ -714,4 +714,12 @@
     <string name="community_likes_error" translatable="false">Could not confirm likes. Tap to refresh before trying again.</string>
     <string name="community_like_accessibility" translatable="false">Like video. %1$d community likes.</string>
     <string name="community_unlike_accessibility" translatable="false">Remove your like. %1$d community likes.</string>
+    <string name="autoplay_next_title">Autoplay next video</string>
+    <string name="autoplay_mode">Choose next video</string>
+    <string name="autoplay_related">Related videos</string>
+    <string name="autoplay_random">Random discovery</string>
+    <string name="autoplay_up_next">Up next</string>
+    <string name="autoplay_play_now">Play now</string>
+    <string name="autoplay_countdown">%1$s\n\nPlaying in %2$d seconds</string>
+    <string name="autoplay_unavailable">No new free video is available right now. Choose another video to continue.</string>
 </resources>

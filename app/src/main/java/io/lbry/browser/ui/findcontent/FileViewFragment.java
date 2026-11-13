@@ -200,6 +200,8 @@ public class FileViewFragment extends BaseFragment implements
     private PlayerControlView castControlView;
     private Player currentPlayer;
     private boolean loadingNewClaim;
+    private boolean autoplayNextRequested;
+    private io.lbry.browser.autoplay.AutoplayController autoplayNext;
     private boolean startDownloadPending;
     private boolean fileGetPending;
     private boolean downloadInProgress;
@@ -312,11 +314,31 @@ public class FileViewFragment extends BaseFragment implements
         inlineChannelCreatorCreateButton = root.findViewById(R.id.inline_channel_form_create_button);
 
         initUi(root);
+        autoplayNext = new io.lbry.browser.autoplay.AutoplayController(root,
+                new io.lbry.browser.autoplay.AutoplayController.Host() {
+                    public boolean isEnded(String id) {
+                        return isResumed() && claim != null && id.equals(claim.getClaimId())
+                            && MainActivity.nowPlayingClaim != null && id.equals(MainActivity.nowPlayingClaim.getClaimId())
+                            && MainActivity.appPlayer != null && MainActivity.appPlayer.getPlaybackState() == Player.STATE_ENDED;
+                    }
+                    public void open(Claim next) {
+                        if (!(getActivity() instanceof MainActivity)) return;
+                        Map<String, Object> nextParams = new HashMap<>();
+                        nextParams.put("claim", next);
+                        nextParams.put("url", next.getPermanentUrl());
+                        nextParams.put("autoplayNext", true);
+                        // Reuse this screen so long autoplay sessions do not grow the back stack.
+                        setParams(nextParams);
+                        autoplayNextRequested = true;
+                        openClaimUrl(next.getPermanentUrl());
+                    }
+                });
 
         fileViewPlayerListener = new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(@Player.State int playbackState) {
                 if (playbackState == Player.STATE_READY) {
+                    if (autoplayNext != null && claim == MainActivity.nowPlayingClaim) autoplayNext.playing(claim);
                     elapsedDuration = MainActivity.appPlayer.getCurrentPosition();
                     totalDuration = MainActivity.appPlayer.getDuration() < 0 ? 0 : MainActivity.appPlayer.getDuration();
                     if (!playbackStarted) {
@@ -335,7 +357,8 @@ public class FileViewFragment extends BaseFragment implements
                     if (loadingNewClaim) {
                         Context context = getContext();
                         if (context instanceof MainActivity) {
-                            MainActivity.appPlayer.setPlayWhenReady(((MainActivity) context).isMediaAutoplayEnabled());
+                            MainActivity.appPlayer.setPlayWhenReady(autoplayNextRequested || ((MainActivity) context).isMediaAutoplayEnabled());
+                            autoplayNextRequested = false;
                         }
                         loadingNewClaim = false;
                     }
@@ -369,6 +392,9 @@ public class FileViewFragment extends BaseFragment implements
                     }
 
                     showBuffering();
+                } else if (playbackState == Player.STATE_ENDED) {
+                    hideBuffering();
+                    if (autoplayNext != null) autoplayNext.ended(claim);
                 } else {
                     hideBuffering();
                 }
@@ -419,6 +445,7 @@ public class FileViewFragment extends BaseFragment implements
         Claim newClaim = null;
         String newUrl = null;
         if (params != null) {
+            autoplayNextRequested = Boolean.TRUE.equals(params.get("autoplayNext"));
             if (params.containsKey("claim")) {
                 newClaim = (Claim) params.get("claim");
                 if (newClaim != null && !newClaim.equals(this.claim)) {
@@ -645,6 +672,7 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     private void onNewClaim(String url) {
+        if (autoplayNext != null) autoplayNext.cancel();
         if (communityLikes != null) communityLikes.bind(null);
         loadingNewClaim = true;
         initialFileLoadDone = false;
@@ -786,6 +814,7 @@ public class FileViewFragment extends BaseFragment implements
 
     public void onResume() {
         super.onResume();
+        if (autoplayNext != null) autoplayNext.start();
         if (sponsorBanner != null) sponsorBanner.start();
         if (communityLikes != null) communityLikes.start();
         checkParams();
@@ -828,6 +857,7 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     public void onPause() {
+        if (autoplayNext != null) autoplayNext.stop();
         if (sponsorBanner != null) sponsorBanner.stop();
         if (communityLikes != null) communityLikes.stop();
         if (MainActivity.appPlayer != null) {
@@ -857,6 +887,7 @@ public class FileViewFragment extends BaseFragment implements
 
     @Override
     public void onDestroyView() {
+        if (autoplayNext != null) { autoplayNext.stop(); autoplayNext = null; }
         if (sponsorBanner != null) { sponsorBanner.stop(); sponsorBanner = null; }
         if (communityLikes != null) { communityLikes.stop(); communityLikes = null; }
         super.onDestroyView();
@@ -1855,7 +1886,7 @@ public class FileViewFragment extends BaseFragment implements
                     ((MainActivity) context).setNowPlayingClaim(claim, currentUrl);
                 }
 
-                MainActivity.appPlayer.setPlayWhenReady(Objects.requireNonNull((MainActivity) (getActivity())).isMediaAutoplayEnabled());
+                MainActivity.appPlayer.setPlayWhenReady(autoplayNextRequested || Objects.requireNonNull((MainActivity) (getActivity())).isMediaAutoplayEnabled());
                 String streamUrl = getStreamingUrl();
                 preparePlayback(context, claim, streamUrl, streamUrl.equals(buildLbryTvStreamingUrl()));
             }
@@ -2442,9 +2473,10 @@ public class FileViewFragment extends BaseFragment implements
                     title, RELATED_CONTENT_SIZE, 0, canShowMatureContent, claimId, relatedLoading, new ClaimSearchResultHandler() {
                 @Override
                 public void onSuccess(List<Claim> claims, boolean hasReachedEnd) {
+                    if (claim == null || !claimId.equals(claim.getClaimId()) || getView() != root) return;
                     List<Claim> filteredClaims = new ArrayList<>();
                     for (Claim c : claims) {
-                        if (!c.getClaimId().equalsIgnoreCase(claim.getClaimId())) {
+                        if (c != null && c.getClaimId() != null && !c.getClaimId().equalsIgnoreCase(claimId)) {
                             filteredClaims.add(c);
                         }
                     }

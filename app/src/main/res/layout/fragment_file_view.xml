@@ -267,6 +267,7 @@
                 </RelativeLayout>
 
                 <include layout="@layout/community_likes" />
+                <include layout="@layout/autoplay_next" />
 
                 <LinearLayout
                     android:id="@+id/file_view_actions_area"
