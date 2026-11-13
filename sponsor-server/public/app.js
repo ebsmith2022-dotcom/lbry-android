@@ -24,7 +24,7 @@ form.onsubmit = event => { event.preventDefault(); run(async () => {
   const image = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = reject; reader.readAsDataURL(file); });
   await api('/api/campaigns', { sponsor: form.elements.sponsor.value, destination: form.elements.destination.value, amount: form.elements.amount.value, starts: new Date(form.elements.starts.value).getTime(), ends: new Date(form.elements.ends.value).getTime(), image });
   form.elements.sponsor.value = ''; form.elements.destination.value = ''; $('file').value = ''; $('draft-preview').hidden = true;
-  if (objectUrl) URL.revokeObjectURL(objectUrl); await refresh(); message('Draft saved. Confirm received payment, then approve when ready.');
+  if (objectUrl) URL.revokeObjectURL(objectUrl); await refresh(); message('Draft saved. Confirm payment or record a complimentary reason, then approve.');
 }); };
 async function refresh() {
   const data = await api('/api/campaigns'); showDashboard(); enabled = data.enabled;
@@ -40,12 +40,14 @@ async function refresh() {
     card.querySelector('img').src = `/v1/images/${c.id}`;
     const link = card.querySelector('.destination'); link.textContent = c.destination; link.href = c.destination;
     card.querySelector('.dates').textContent = `${new Date(c.starts).toLocaleString()} → ${new Date(c.ends).toLocaleString()}`;
-    card.querySelector('.payment').textContent = `${c.amount} LBC · ${c.txid ? 'Payment manually confirmed' : 'Payment not confirmed'}`;
-    card.querySelector('details').hidden = !!c.txid || c.status !== 'pending' || expired;
+    card.querySelector('.payment').textContent = c.complimentary_reason ? `Complimentary / test · No payment required · ${c.complimentary_reason}` : `${c.amount} LBC · ${c.txid ? 'Payment manually confirmed' : 'Payment not confirmed'}`;
+    card.querySelector('.payment-details').hidden = !!(c.txid || c.complimentary_reason) || Number(c.amount) <= 0 || c.status !== 'pending' || expired;
+    card.querySelector('.complimentary-details').hidden = !!(c.txid || c.complimentary_reason) || c.status !== 'pending' || expired;
+    card.querySelector('.complimentary-form').onsubmit = event => { event.preventDefault(); run(async () => { await api(`/api/campaigns/${c.id}/complimentary`, { reason: event.target.elements.reason.value }); await refresh(); message('Complimentary reason recorded. Click Approve when ready.'); }); };
     card.querySelector('.payment-form').onsubmit = event => { event.preventDefault(); run(async () => { await api(`/api/campaigns/${c.id}/payment`, { txid: event.target.elements.txid.value, confirmed: event.target.elements.confirmed.checked }); await refresh(); message('Payment recorded. The banner still needs your approval.'); }); };
     for (const action of ['approve', 'pause', 'reject']) {
       const button = card.querySelector(`.${action}`);
-      button.hidden = action === 'approve' ? !(c.txid && ['pending', 'paused'].includes(c.status) && !expired) : action === 'pause' ? c.status !== 'approved' : c.status === 'rejected';
+      button.hidden = action === 'approve' ? !((c.txid || c.complimentary_reason) && ['pending', 'paused'].includes(c.status) && !expired) : action === 'pause' ? c.status !== 'approved' : c.status === 'rejected';
       if (action === 'approve' && c.status === 'paused') button.textContent = 'Resume';
       button.onclick = () => run(async () => { if (!confirm(`${action === 'approve' ? 'Approve this banner and destination' : action === 'pause' ? 'Pause this campaign' : 'Permanently reject/remove this campaign'} for ${c.sponsor}?`)) return; await api(`/api/campaigns/${c.id}/${action}`, {}); await refresh(); message('Campaign updated. App refreshes take up to about one minute.'); });
     }

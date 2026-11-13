@@ -7,10 +7,10 @@ Google Play preparation is paused. This feature is being developed for the indep
 - One owner login, private campaign list and image preview.
 - Upload static PNG/JPEG banners (up to 2 MB, 3:1–8:1 aspect ratio; recommended 960×150).
 - Name, HTTPS destination, start/end time, and agreed LBC amount.
-- Manual payment confirmation with a unique transaction ID, followed by separate approval.
+- Manual payment confirmation with a unique transaction ID, or an owner-only complimentary/test exception with a 5–300 character reason, followed by separate approval.
 - Pause, resume, permanently reject/remove, automatic schedule expiry and a master stop switch.
 - Decision history stored in SQLite. Rejecting removes a campaign from delivery; it retains the record for accounting.
-- Public API returns only currently approved, paid, in-date campaigns while delivery is enabled. Multiple eligible ads are selected randomly; no impression guarantee.
+- Public API returns only currently approved, paid or complimentary, in-date campaigns while delivery is enabled. Multiple eligible ads are selected randomly; no impression guarantee.
 - Android displays a labeled banner below the video in the scrollable details area. No overlay or pre-roll. Sponsor links require a confirmation showing the destination hostname.
 - Ads are hidden on network errors, invalid responses, app backgrounding and expiry; playback never waits for them. Refresh is at most 60 seconds. Pause cannot instantly recall an already displayed banner.
 - No ad network SDK, viewer identifiers, content URL, wallet information, automatic LBC transfer or tracking pixels. The HTTP server necessarily receives network requests; it does not store viewer IPs or impressions. Failed admin login attempts are stored for 15 minutes for throttling.
@@ -72,3 +72,7 @@ Backend tests cover authentication, session invalidation, CSRF/origin checks, th
 ## Before internet hosting
 
 This is deliberately localhost-only. A hosting deployment still needs a chosen account/domain, TLS termination, strict trusted-host/proxy configuration, Secure cookies, production rate/resource limits, backups, credential rotation/recovery and preferably MFA/access protection for the admin dashboard. Review hosting costs and retention/privacy disclosures before launch. Review advertiser content/destination rules and sponsorship agreements. No hosting was purchased, no ports exposed, and no app or ads publicly released.
+
+## Complimentary / test campaigns
+
+Enter 0 LBC for a new free campaign (existing unpaid drafts may also be marked complimentary). Save, expand **Complimentary / test campaign**, enter a reason, and click **Mark complimentary / test**. Then approve separately. The private history records the reason; the public API does not expose it. Payment and complimentary status are mutually exclusive, and paid, approved or rejected campaigns cannot be reclassified. Existing databases migrate automatically without changing campaigns or passwords.

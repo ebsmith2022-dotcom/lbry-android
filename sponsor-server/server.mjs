@@ -36,6 +36,9 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, campaign TEXT, action TEXT NOT NULL, created INTEGER NOT NULL);
     CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY CHECK(id=1), enabled INTEGER NOT NULL);
     INSERT OR IGNORE INTO settings VALUES(1, 1);`);
+  if (!db.prepare('PRAGMA table_info(campaigns)').all().some(c => c.name === 'complimentary_reason')) {
+    db.exec('ALTER TABLE campaigns ADD COLUMN complimentary_reason TEXT');
+  }
   const app = express();
   app.disable('x-powered-by');
   app.use((req, res, next) => {
@@ -61,7 +64,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     if (req.method !== 'GET' && req.get('x-csrf-token') !== req.admin.csrf) return res.status(403).json({ error: 'Refresh the dashboard and try again.' });
     next();
   };
-  const active = row => row && row.status === 'approved' && row.txid && row.starts <= clock() && row.ends > clock() && db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled;
+  const active = row => row && row.status === 'approved' && (row.txid || row.complimentary_reason) && row.starts <= clock() && row.ends > clock() && db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled;
   const audit = (id, action) => db.prepare('INSERT INTO audit(campaign,action,created) VALUES(?,?,?)').run(id, action, clock());
   app.post('/api/login', (req, res) => {
     const now = clock(), ip = req.ip;
@@ -82,7 +85,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     res.clearCookie('sponsor_session', { path: '/' }).json({ ok: true });
   });
   app.get('/api/campaigns', requireAdmin, (req, res) => {
-    const rows = db.prepare('SELECT id,sponsor,destination,starts,ends,amount,status,txid,created FROM campaigns ORDER BY created DESC').all();
+    const rows = db.prepare('SELECT id,sponsor,destination,starts,ends,amount,status,txid,complimentary_reason,created FROM campaigns ORDER BY created DESC').all();
     res.json({ campaigns: rows.map(row => ({ ...row, live: !!active(row) })), enabled: !!db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled,
       audit: db.prepare('SELECT campaign,action,created FROM audit ORDER BY id DESC LIMIT 50').all() });
   });
@@ -90,8 +93,8 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     const { sponsor, destination, starts, ends, amount, image } = req.body || {};
     if (typeof sponsor !== 'string' || !sponsor.trim() || sponsor.length > 80 || !httpsUrl(destination) ||
         !Number.isSafeInteger(starts) || !Number.isSafeInteger(ends) || ends <= starts || ends <= clock() ||
-        typeof amount !== 'string' || !/^\d{1,10}(\.\d{1,8})?$/.test(amount) || Number(amount) <= 0 ||
-        typeof image !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(image)) return res.status(400).json({ error: 'Check the name, HTTPS link, dates, positive LBC amount and image.' });
+        typeof amount !== 'string' || !/^\d{1,10}(\.\d{1,8})?$/.test(amount) || Number(amount) < 0 ||
+        typeof image !== 'string' || !/^[A-Za-z0-9+/]+={0,2}$/.test(image)) return res.status(400).json({ error: 'Check the name, HTTPS link, dates, non-negative LBC amount and image.' });
     try {
       const raw = Buffer.from(image, 'base64');
       if (raw.length > 2 * 1024 * 1024) throw Error('large');
@@ -112,12 +115,19 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     const action = req.params.action;
     if (action === 'payment') {
       const txid = req.body?.txid;
-      if (row.status !== 'pending' || row.txid || !/^[a-fA-F0-9]{64}$/.test(txid || '') || req.body?.confirmed !== true) return res.status(400).json({ error: 'Confirm the amount and receiving address in your wallet, then enter the 64-character transaction ID. Payment can only be recorded once, while pending.' });
+      if (row.status !== 'pending' || row.txid || row.complimentary_reason || Number(row.amount) <= 0 || !/^[a-fA-F0-9]{64}$/.test(txid || '') || req.body?.confirmed !== true) return res.status(400).json({ error: 'Confirm the amount and receiving address in your wallet, then enter the 64-character transaction ID. Payment can only be recorded once, while pending.' });
       try { db.prepare('UPDATE campaigns SET txid=? WHERE id=?').run(txid.toLowerCase(), row.id); }
       catch { return res.status(409).json({ error: 'This transaction is already assigned to another campaign.' }); }
       audit(row.id, 'Payment manually confirmed by owner');
+    } else if (action === 'complimentary') {
+      const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+      if (row.status !== 'pending' || row.txid || row.complimentary_reason || row.ends <= clock() || reason.length < 5 || reason.length > 300) {
+        return res.status(400).json({ error: 'Use an unpaid pending campaign and enter a reason of 5–300 characters.' });
+      }
+      db.prepare('UPDATE campaigns SET complimentary_reason=? WHERE id=?').run(reason, row.id);
+      audit(row.id, 'Owner marked complimentary / test: ' + reason);
     } else if (action === 'approve') {
-      if (!row.txid || !['pending', 'paused'].includes(row.status) || row.ends <= clock()) return res.status(409).json({ error: 'Approval needs confirmed payment, a pending/paused campaign and a future end date.' });
+      if (!(row.txid || row.complimentary_reason) || !['pending', 'paused'].includes(row.status) || row.ends <= clock()) return res.status(409).json({ error: 'Approval needs confirmed payment or an owner-recorded complimentary reason, a pending/paused campaign and a future end date.' });
       db.prepare("UPDATE campaigns SET status='approved' WHERE id=?").run(row.id); audit(row.id, 'Approved');
     } else if (action === 'pause' && row.status === 'approved') {
       db.prepare("UPDATE campaigns SET status='paused' WHERE id=?").run(row.id); audit(row.id, 'Paused');
@@ -132,7 +142,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     audit(null, req.body.enabled ? 'All ads enabled' : 'All ads stopped'); res.json({ ok: true });
   });
   app.get('/v1/banner', (req, res) => {
-    const rows = db.prepare("SELECT id,sponsor,destination,starts,ends,status,txid FROM campaigns WHERE status='approved' AND starts<=? AND ends>? ORDER BY created").all(clock(), clock()).filter(active);
+    const rows = db.prepare("SELECT id,sponsor,destination,starts,ends,status,txid,complimentary_reason FROM campaigns WHERE status='approved' AND starts<=? AND ends>? ORDER BY created").all(clock(), clock()).filter(active);
     if (!rows.length) return res.status(204).end();
     const row = rows[Math.floor(Math.random() * rows.length)];
     // No private payment records, wallet identity or viewer identifiers in this API.

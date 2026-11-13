@@ -72,6 +72,27 @@ test('invalid links, amounts, time ranges and images are rejected', async () => 
   const square = (await sharp({ create: { width: 100, height: 100, channels: 3, background: '#fff' } }).png().toBuffer()).toString('base64');
   assert.equal((await create({ image: square })).status, 400);
 });
+test('complimentary requires owner, CSRF and reason; approval remains separate', async () => {
+  const { id } = await (await create({ amount: '0' })).json();
+  const route = `/api/campaigns/${id}/complimentary`;
+  assert.equal((await request(route, { reason: 'Own promotion' }, false)).status, 401);
+  assert.equal((await request(route, { reason: 'Own promotion' }, true, { 'x-csrf-token': 'wrong' })).status, 403);
+  assert.equal((await request(route, { reason: ' ' })).status, 400);
+  assert.equal((await request(`/api/campaigns/${id}/approve`, {})).status, 409);
+  assert.equal((await request(route, { reason: 'Own promotion' })).status, 200);
+  assert.equal((await request('/v1/banner', undefined, false)).status, 204);
+  assert.equal((await paid(id, 'c'.repeat(64))).status, 400);
+  assert.equal((await request(`/api/campaigns/${id}/approve`, {})).status, 200);
+  const ad = await (await request('/v1/banner', undefined, false)).json();
+  assert.equal(ad.id, id); assert.equal(ad.complimentary_reason, undefined);
+  const admin = await (await request('/api/campaigns')).json();
+  assert.ok(admin.audit.some(e => e.action.includes('Own promotion')));
+  await request(`/api/campaigns/${id}/pause`, {});
+  assert.equal((await request('/v1/banner', undefined, false)).status, 204);
+  await request(`/api/campaigns/${id}/approve`, {});
+  now += 3600001;
+  assert.equal((await request('/v1/banner', undefined, false)).status, 204);
+});
 test('logout revokes old cookie and repeated failed login is throttled', async () => {
   assert.equal((await request('/api/logout', {})).status, 200);
   assert.equal((await request('/api/campaigns')).status, 401);
