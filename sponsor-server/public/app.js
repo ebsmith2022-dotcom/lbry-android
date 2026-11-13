@@ -1,4 +1,4 @@
-let csrf = '', enabled = true;
+let csrf = '', enabled = true, metricsRequest = 0;
 const $ = id => document.getElementById(id);
 const message = text => { $('message').textContent = text; };
 async function api(path, body) {
@@ -53,7 +53,31 @@ async function refresh() {
     }
     $('campaigns').append(fragment);
   }
+  await refreshMetrics();
   $('audit').replaceChildren(); const names = new Map(data.campaigns.map(c => [c.id, c.sponsor]));
   for (const entry of data.audit) { const li = document.createElement('li'); li.textContent = `${new Date(entry.created).toLocaleString()} · ${entry.action}${entry.campaign ? ' · ' + (names.get(entry.campaign) || entry.campaign) : ''}`; $('audit').append(li); }
 }
 run(async () => { try { csrf = (await api('/api/session')).csrf; await refresh(); } catch { showLogin(); } });
+
+async function refreshMetrics() {
+  const requestNumber = ++metricsRequest;
+  const period = $('metrics-period').value, date = $('metrics-date').value;
+  const query = new URLSearchParams({ period }); if (date) query.set('date', date);
+  const report = await api('/api/analytics?' + query);
+  if (requestNumber !== metricsRequest) return;
+  if (!date) $('metrics-date').value = report.date;
+  const last = new Date(report.end + 'T00:00:00Z'); last.setUTCDate(last.getUTCDate() - 1);
+  $('metrics-range').textContent = `${report.start} through ${last.toISOString().slice(0,10)} · Eastern Time · Refresh to see new events`;
+  $('metrics-rows').replaceChildren();
+  for (const campaign of report.campaigns) {
+    const tr = document.createElement('tr');
+    for (const value of [campaign.sponsor, campaign.impressions.toLocaleString(), campaign.clicks.toLocaleString(), campaign.impressions ? (campaign.clicks / campaign.impressions * 100).toFixed(2) + '%' : '—']) {
+      const td = document.createElement('td'); td.textContent = value; tr.append(td);
+    }
+    $('metrics-rows').append(tr);
+  }
+  if (!report.campaigns.length) { const tr = document.createElement('tr'), td = document.createElement('td'); td.colSpan = 4; td.textContent = 'Create a campaign to start measuring impressions and clicks.'; tr.append(td); $('metrics-rows').append(tr); }
+}
+$('metrics-period').onchange = () => run(refreshMetrics);
+$('metrics-date').onchange = () => run(refreshMetrics);
+$('refresh-metrics').onclick = () => run(refreshMetrics);

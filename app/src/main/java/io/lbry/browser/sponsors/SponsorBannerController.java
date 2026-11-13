@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Handler;
@@ -25,9 +26,11 @@ import okhttp3.Call;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.MediaType;
 import okhttp3.Response;
 
-/** Optional app sponsorship. No wallet, sign-in, content identifier or analytics is sent. */
+/** Optional sponsorship with delivery-scoped aggregate metrics; no wallet, account or device identifier is sent. */
 public final class SponsorBannerController {
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
@@ -40,6 +43,8 @@ public final class SponsorBannerController {
     private volatile int generation;
     private volatile Call pending;
     private boolean running;
+    private long visibleSince = -1;
+    private Runnable visibilityCheck;
     private final Runnable refresh = this::load;
 
     public SponsorBannerController(View root) {
@@ -54,6 +59,8 @@ public final class SponsorBannerController {
         hide();
     }
     private void hide() {
+        if (visibilityCheck != null) main.removeCallbacks(visibilityCheck);
+        visibilityCheck = null; visibleSince = -1;
         container.setVisibility(View.GONE); image.setImageDrawable(null); image.setOnClickListener(null);
     }
     private void load() {
@@ -73,6 +80,7 @@ public final class SponsorBannerController {
                 String path = ad.getString("image");
                 HttpUrl destination = HttpUrl.parse(ad.getString("destination"));
                 int ttl = ad.getInt("ttl_seconds");
+                final String eventToken = ad.optString("event_token", "");
                 if (sponsor.isEmpty() || sponsor.length() > 80 || !path.matches("/v1/images/[a-f0-9-]{36}") ||
                         destination == null || !destination.isHttps() || !destination.username().isEmpty() || !destination.password().isEmpty() || ttl < 1 || ttl > 60) return;
                 long expires = SystemClock.elapsedRealtime() + ttl * 1000L;
@@ -92,14 +100,51 @@ public final class SponsorBannerController {
                             .setTitle(R.string.sponsor_visit_title).setMessage(destination.host())
                             .setNegativeButton(android.R.string.cancel, null)
                             .setPositiveButton(R.string.sponsor_visit, (dialog, which) -> {
-                                try { view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(destination.toString()))); }
+                                try {
+                                    view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(destination.toString())));
+                                    sendEvent(base, eventToken, "click");
+                                }
                                 catch (ActivityNotFoundException ignored) { /* No browser installed. */ }
                             }).show());
                     container.setVisibility(View.VISIBLE);
+                    observeImpression(base, eventToken, ticket, expires);
                     main.removeCallbacks(refresh);
                     main.postDelayed(refresh, Math.max(1, expires - SystemClock.elapsedRealtime()));
                 });
             } catch (Exception ignored) { /* Ads are optional: never affect playback or display request data in logs. */ }
+        });
+    }
+    static boolean isViewable(View view) {
+        if (!view.isAttachedToWindow() || !view.isShown() || !view.hasWindowFocus() || view.getWidth() <= 0 || view.getHeight() <= 0) return false;
+        Rect visible = new Rect();
+        return view.getGlobalVisibleRect(visible) &&
+                (long) visible.width() * visible.height() * 2 >= (long) view.getWidth() * view.getHeight();
+    }
+    private void observeImpression(HttpUrl base, String token, int ticket, long expires) {
+        if (!token.matches("[a-f0-9]{64}")) return;
+        visibilityCheck = new Runnable() {
+            @Override public void run() {
+                if (!running || generation != ticket || SystemClock.elapsedRealtime() >= expires) return;
+                long now = SystemClock.elapsedRealtime();
+                if (isViewable(image)) {
+                    if (visibleSince < 0) visibleSince = now;
+                    if (now - visibleSince >= 1000) { sendEvent(base, token, "impression"); return; }
+                } else visibleSince = -1;
+                main.postDelayed(this, 250);
+            }
+        };
+        main.post(visibilityCheck);
+    }
+    private static void sendEvent(HttpUrl base, String token, String type) {
+        if (!token.matches("[a-f0-9]{64}")) return;
+        IO.execute(() -> {
+            try {
+                JSONObject payload = new JSONObject(); payload.put("token", token); payload.put("type", type);
+                Request request = new Request.Builder().url(base.newBuilder().encodedPath("/v1/events").build())
+                        .post(RequestBody.create(MediaType.parse("application/json"), payload.toString())).build();
+                // Best effort; receipt deduplication handles any transport retry. No persistent event queue.
+                try (Response ignored = CLIENT.newCall(request).execute()) { }
+            } catch (Exception ignored) { /* Metrics must never interrupt playback or navigation. */ }
         });
     }
     private static boolean allowedBase(HttpUrl base) {

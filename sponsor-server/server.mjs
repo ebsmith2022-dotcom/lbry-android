@@ -1,3 +1,4 @@
+import { analytics, localDay } from './analytics.mjs';
 import express from 'express';
 import sharp from 'sharp';
 import { DatabaseSync } from 'node:sqlite';
@@ -39,6 +40,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
   if (!db.prepare('PRAGMA table_info(campaigns)').all().some(c => c.name === 'complimentary_reason')) {
     db.exec('ALTER TABLE campaigns ADD COLUMN complimentary_reason TEXT');
   }
+  const metrics = analytics(db, clock);
   const app = express();
   app.disable('x-powered-by');
   app.use((req, res, next) => {
@@ -46,13 +48,14 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
       'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY',
       'Content-Security-Policy': "default-src 'self'; img-src 'self' blob:; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'" });
     // Reject browser cross-origin mutations, including login. No CORS is enabled.
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
+    if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.path === '/v1/events' && req.method === 'POST')) {
       const expected = `${secure ? 'https' : 'http'}://${req.get('host')}`;
       if (req.get('origin') !== expected || req.get('x-dashboard') !== '1') return res.status(403).json({ error: 'Open the dashboard directly to make changes.' });
     }
     next();
   });
-  app.use(express.json({ limit: '3mb' }));
+  const dashboardJson = express.json({ limit: '3mb' });
+  app.use((req, res, next) => req.path === '/v1/events' ? next() : dashboardJson(req, res, next));
   const sessionFor = req => {
     const cookie = (req.headers.cookie || '').split(';').map(s => s.trim()).find(s => s.startsWith('sponsor_session='));
     if (!cookie) return null;
@@ -83,6 +86,16 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
   app.post('/api/logout', requireAdmin, (req, res) => {
     db.prepare('DELETE FROM sessions WHERE token=?').run(req.admin.token);
     res.clearCookie('sponsor_session', { path: '/' }).json({ ok: true });
+  });
+  app.get('/api/analytics', requireAdmin, (req, res) => {
+    try { res.json(metrics.report(req.query.period || 'daily', req.query.date || localDay(clock()))); }
+    catch { res.status(400).json({ error: 'Choose daily, weekly or monthly and a valid YYYY-MM-DD date.' }); }
+  });
+  app.post('/v1/events', express.json({ limit: '1kb' }), (req, res) => {
+    // Only short-lived delivery receipts can submit events. Never accepts a campaign ID or client date.
+    if (req.get('origin')) return res.status(403).end();
+    if (!metrics.record(req.body?.token, req.body?.type)) return res.status(400).end();
+    res.status(204).end();
   });
   app.get('/api/campaigns', requireAdmin, (req, res) => {
     const rows = db.prepare('SELECT id,sponsor,destination,starts,ends,amount,status,txid,complimentary_reason,created FROM campaigns ORDER BY created DESC').all();
@@ -146,7 +159,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     if (!rows.length) return res.status(204).end();
     const row = rows[Math.floor(Math.random() * rows.length)];
     // No private payment records, wallet identity or viewer identifiers in this API.
-    res.json({ id: row.id, sponsor: row.sponsor, destination: row.destination, image: `/v1/images/${row.id}`, ttl_seconds: Math.max(1, Math.min(60, Math.floor((row.ends - clock()) / 1000))) });
+    res.json({ id: row.id, sponsor: row.sponsor, destination: row.destination, image: `/v1/images/${row.id}`, event_token: metrics.issue(row.id), ttl_seconds: Math.max(1, Math.min(60, Math.floor((row.ends - clock()) / 1000))) });
   });
   app.get('/v1/images/:id', (req, res) => {
     const row = db.prepare('SELECT * FROM campaigns WHERE id=?').get(req.params.id);
