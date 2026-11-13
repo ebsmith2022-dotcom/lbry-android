@@ -11,7 +11,7 @@ import okhttp3.Response;
 
 /** Uses the same reported-view service as the video's displayed view count. */
 public final class AutoplayViewCounts {
-    public static final int MINIMUM_VIEWS = 100;
+    public static final int MINIMUM_VIEWS = 40;
     private static final OkHttpClient CLIENT = new OkHttpClient.Builder()
             .callTimeout(4, TimeUnit.SECONDS).connectTimeout(3, TimeUnit.SECONDS)
             .readTimeout(3, TimeUnit.SECONDS).build();
