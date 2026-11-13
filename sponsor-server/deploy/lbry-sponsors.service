@@ -1,0 +1,25 @@
+[Unit]
+Description=LBRY Community sponsor dashboard
+After=network.target
+[Service]
+User=sponsors
+Group=sponsors
+WorkingDirectory=/opt/lbry-sponsors
+ExecStart=/opt/node24/bin/node /opt/lbry-sponsors/server.mjs
+Environment=NODE_ENV=production
+Environment=SPONSOR_ORIGIN=https://lbrycommunity-ads.duckdns.org
+Environment=SPONSOR_DATA=/var/lib/lbry-sponsors
+Environment=PORT=8787
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lbry-sponsors
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=400M
+TasksMax=80
+[Install]
+WantedBy=multi-user.target

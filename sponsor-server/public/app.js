@@ -81,3 +81,14 @@ async function refreshMetrics() {
 $('metrics-period').onchange = () => run(refreshMetrics);
 $('metrics-date').onchange = () => run(refreshMetrics);
 $('refresh-metrics').onclick = () => run(refreshMetrics);
+
+$('password-form').onsubmit = event => {
+ event.preventDefault(); run(async () => {
+  if ($('new-password').value !== $('confirm-password').value) throw Error('The new passwords do not match.');
+  $('save-password').disabled = true;
+  try {
+   await api('/api/password', {currentPassword:$('current-password').value,newPassword:$('new-password').value});
+   $('password-form').reset(); showLogin(); message('Password changed. All sessions are signed out. Sign in with your new password.');
+  } finally { $('save-password').disabled = false; }
+ });
+};

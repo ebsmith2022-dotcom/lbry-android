@@ -3,7 +3,7 @@ import express from 'express';
 import sharp from 'sharp';
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, randomUUID, scryptSync, timingSafeEqual, createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync, existsSync, renameSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -24,7 +24,8 @@ function httpsUrl(value) {
     return url.protocol === 'https:' && !url.username && !url.password && url.hostname.includes('.') && value.length <= 2048;
   } catch { return false; }
 }
-export function createApp({ dataDir, adminHash, clock = Date.now, secure = false }) {
+export function createApp({ dataDir, adminHash, clock = Date.now, secure = false, publicOrigin = null, credentialFile = null }) {
+  if (publicOrigin && (!secure || new URL(publicOrigin).origin !== publicOrigin || !publicOrigin.startsWith("https://"))) throw new Error("Production requires an exact HTTPS origin");
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   const db = new DatabaseSync(join(dataDir, 'sponsors.sqlite'));
   db.exec(`PRAGMA journal_mode=WAL;
@@ -43,13 +44,15 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
   const metrics = analytics(db, clock);
   const app = express();
   app.disable('x-powered-by');
+  if (publicOrigin) app.set('trust proxy', 'loopback');
   app.use((req, res, next) => {
     res.set({ 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY',
       'Content-Security-Policy': "default-src 'self'; img-src 'self' blob:; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'" });
+    if (publicOrigin && req.get('host') !== new URL(publicOrigin).host) return res.status(421).end();
     // Reject browser cross-origin mutations, including login. No CORS is enabled.
     if (req.method !== 'GET' && req.method !== 'HEAD' && !(req.path === '/v1/events' && req.method === 'POST')) {
-      const expected = `${secure ? 'https' : 'http'}://${req.get('host')}`;
+      const expected = publicOrigin || `${secure ? 'https' : 'http'}://${req.get('host')}`;
       if (req.get('origin') !== expected || req.get('x-dashboard') !== '1') return res.status(403).json({ error: 'Open the dashboard directly to make changes.' });
     }
     next();
@@ -86,6 +89,26 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
   app.post('/api/logout', requireAdmin, (req, res) => {
     db.prepare('DELETE FROM sessions WHERE token=?').run(req.admin.token);
     res.clearCookie('sponsor_session', { path: '/' }).json({ ok: true });
+  });
+  app.post('/api/password', requireAdmin, (req, res) => {
+    if (!credentialFile) return res.status(503).json({ error: 'Password changes are unavailable for this instance.' });
+    const now = clock(), ip = req.ip;
+    db.prepare('DELETE FROM attempts WHERE created<?').run(now - 15 * 60_000);
+    if (db.prepare('SELECT count(*) AS n FROM attempts WHERE ip=?').get(ip).n >= 5) return res.status(429).json({ error: 'Too many attempts. Try again in 15 minutes.' });
+    db.prepare('INSERT INTO attempts VALUES(?,?)').run(ip, now);
+    if (!validPassword(req.body?.currentPassword, adminHash)) return res.status(400).json({ error: 'Current password is incorrect.' });
+    const nextPassword = req.body?.newPassword;
+    if (typeof nextPassword !== 'string' || nextPassword.length < 16 || nextPassword.length > 128 || nextPassword === req.body.currentPassword) return res.status(400).json({ error: 'Choose a different password with 16–128 characters.' });
+    const nextHash = passwordHash(nextPassword);
+    const temporary = credentialFile + '.tmp';
+    writeFileSync(temporary, JSON.stringify({ hash: nextHash }), { mode: 0o600 });
+    renameSync(temporary, credentialFile);
+    adminHash = nextHash;
+    db.prepare('DELETE FROM sessions').run();
+    db.prepare('DELETE FROM attempts WHERE ip=?').run(ip);
+    rmSync(join(dataDir, 'first-login.txt'), { force: true });
+    audit(null, 'Owner changed dashboard password; all sessions signed out');
+    res.clearCookie('sponsor_session', { path: '/', secure, httpOnly: true, sameSite: 'strict' }).json({ ok: true });
   });
   app.get('/api/analytics', requireAdmin, (req, res) => {
     try { res.json(metrics.report(req.query.period || 'daily', req.query.date || localDay(clock()))); }
@@ -181,11 +204,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   if (!existsSync(credentials)) {
     const password = randomBytes(18).toString('base64url');
     writeFileSync(credentials, JSON.stringify({ hash: passwordHash(password) }), { mode: 0o600 });
-    writeFileSync(join(dataDir, 'first-login.txt'), `Local dashboard password: ${password}\nKeep this private. This is not a wallet password.\n`, { mode: 0o600 });
+    writeFileSync(join(dataDir, 'first-login.txt'), `Dashboard password: ${password}\nKeep this private. This is not a wallet password.\n`, { mode: 0o600 });
     console.log(`First-login password saved privately in ${join(dataDir, 'first-login.txt')}`);
   }
   const { hash } = JSON.parse(readFileSync(credentials, 'utf8'));
-  const { app } = createApp({ dataDir, adminHash: hash });
+  const publicOrigin = process.env.SPONSOR_ORIGIN || null;
+  if (process.env.NODE_ENV === "production" && !publicOrigin) throw new Error("SPONSOR_ORIGIN is required in production");
+  const { app } = createApp({ dataDir, adminHash: hash, secure: !!publicOrigin, publicOrigin, credentialFile: credentials });
   const port = Number(process.env.PORT || 8787);
   app.listen(port, '127.0.0.1', () => console.log(`Local sponsor dashboard: http://127.0.0.1:${port}`));
 }
