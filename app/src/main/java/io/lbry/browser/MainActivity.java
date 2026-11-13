@@ -1221,6 +1221,24 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         }
     }
 
+    private final Handler sdkStartHandler = new Handler(android.os.Looper.getMainLooper());
+    private boolean sdkActivityResumed;
+    private int sdkStartAttempts;
+    private final Runnable ensureSdkService = new Runnable() {
+        @Override public void run() {
+            if (!sdkActivityResumed || isFinishing() || isDestroyed() || !isFirstRunCompleted()) return;
+            serviceRunning = isServiceRunning(MainActivity.this, LbrynetService.class);
+            if (serviceRunning) return;
+            Lbry.SDK_READY = false;
+            Lbry.IS_STATUS_PARSED = false;
+            if (sdkStartAttempts++ >= 3) return;
+            ServiceHelper.start(MainActivity.this, "", LbrynetService.class, "lbrynetservice");
+            checkSdkReady();
+            // Bounded retries cover a rejected start during an activity transition.
+            sdkStartHandler.postDelayed(this, 2000);
+        }
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -1241,15 +1259,12 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                 requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1003);
             }
         }
-        if (isFirstRunCompleted()) {
-            // check (and start) the LBRY SDK service
-            serviceRunning = isServiceRunning(this, LbrynetService.class);
-            if (!serviceRunning) {
-                Lbry.SDK_READY = false;
-                //findViewById(R.id.global_sdk_initializing_status).setVisibility(View.VISIBLE);
-                ServiceHelper.start(this, "", LbrynetService.class, "lbrynetservice");
-            }
-        }
+        sdkActivityResumed = true;
+        sdkStartAttempts = 0;
+        sdkStartHandler.removeCallbacks(ensureSdkService);
+        // Wait until Android has recorded this activity as foreground, resetting
+        // the data-sync quota before requesting another service session.
+        sdkStartHandler.postDelayed(ensureSdkService, 500);
         checkSdkReady();
         showSignedInUser();
         checkPendingOpens();
@@ -1284,6 +1299,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     @Override
     protected void onPause() {
+        sdkActivityResumed = false;
+        sdkStartHandler.removeCallbacks(ensureSdkService);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
         if (!enteringPIPMode && !inPictureInPictureMode && appPlayer != null && !isBackgroundPlaybackEnabled()) {
             appPlayer.setPlayWhenReady(false);

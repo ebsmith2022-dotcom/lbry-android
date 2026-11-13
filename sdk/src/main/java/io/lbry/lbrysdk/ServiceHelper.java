@@ -30,7 +30,12 @@ public final class ServiceHelper {
 
     public static void start(final Context ctx, String pythonServiceArgument, Class serviceClass, String pythonName) {
         Intent intent = buildIntent(ctx, pythonServiceArgument, serviceClass, pythonName);
-        ctx.startService(intent);
+        try {
+            ctx.startService(intent);
+        } catch (IllegalStateException error) {
+            // Activity visibility can change between scheduling and this call.
+            android.util.Log.w("LbrynetService", "SDK start deferred while app is background");
+        }
     }
 
     public static void stop(Context ctx, Class serviceClass) {

@@ -194,11 +194,13 @@ public class Claim {
      * @return URL from the CDN from where image can be retrieved
      */
     public String getThumbnailUrl(int width, int height, int q) {
-        if (value != null && value.getThumbnail() != null) {
-            ImageCDNUrl imageCDNUrl = new ImageCDNUrl(Math.max(width, 0), Math.max(height, 0), q, null, value.getThumbnail().getUrl());
-            return imageCDNUrl.toString();
+        String thumbnailUrl = getThumbnailUrl();
+        // Search results can contain a thumbnail object with a missing URL.
+        if (thumbnailUrl == null || thumbnailUrl.trim().isEmpty()) {
+            return null;
         }
-        return null;
+        return new ImageCDNUrl(Math.max(width, 0), Math.max(height, 0), q, null,
+                thumbnailUrl).toString();
     }
 
     public String getCoverUrl() {

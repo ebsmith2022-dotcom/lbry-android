@@ -79,6 +79,7 @@ public final class LbrynetService extends PythonService {
     private ScheduledFuture taskExecutorHandle = null;
 
     private boolean fileManagerReady = false;
+    private boolean foregroundStarted;
 
     @Override
     public boolean canDisplayNotification() {
@@ -172,6 +173,8 @@ public final class LbrynetService extends PythonService {
 
     @Override
     protected void doStartForeground(Bundle extras) {
+        // PythonService calls this again after starting its thread.
+        if (foregroundStarted) return;
         downloadManager = new DownloadManager(this);
         NotificationManager notificationManager =
             (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -195,6 +198,7 @@ public final class LbrynetService extends PythonService {
 
         Notification notification = buildNotification();
         startForeground(1, notification);
+        foregroundStarted = true;
     }
 
     private void checkDownloads() {
@@ -465,7 +469,19 @@ public final class LbrynetService extends PythonService {
         serviceInstance = this;
 
         // Enter foreground before extracting the runtime, which can take several seconds.
-        doStartForeground(new Bundle());
+        try {
+            doStartForeground(new Bundle());
+        } catch (IllegalStateException error) {
+            if (Build.VERSION.SDK_INT >= 31 &&
+                    error instanceof android.app.ForegroundServiceStartNotAllowedException) {
+                // Respect Android's background/quota restriction. A visible activity
+                // may retry; never launch the Python runtime after a rejected start.
+                Log.w(TAG, "SDK start deferred until the app is foreground");
+                stopSelf();
+                return START_NOT_STICKY;
+            }
+            throw error;
+        }
 
         // Extract files
         File app_root_file = new File(getAppRoot());
@@ -510,8 +526,11 @@ public final class LbrynetService extends PythonService {
             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
 
-        super.onDestroy();
+        if (taskExecutorHandle != null) taskExecutorHandle.cancel(true);
+        if (taskExecutor != null) taskExecutor.shutdownNow();
+        foregroundStarted = false;
         serviceInstance = null;
+        super.onDestroy();
     }
 
     public String getAppRoot() {
