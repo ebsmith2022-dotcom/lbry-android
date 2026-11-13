@@ -721,6 +721,6 @@
     <string name="autoplay_up_next">Up next</string>
     <string name="autoplay_play_now">Play now</string>
     <string name="autoplay_countdown">%1$s\n\nPlaying in %2$d seconds</string>
-    <string name="autoplay_unavailable">No eligible free video with 40 or more reported views was found. Choose another video to continue.</string>
-    <string name="autoplay_minimum_views">Free videos with at least 40 reported views. Unavailable counts are skipped.</string>
+    <string name="autoplay_unavailable">No eligible free video with 10 or more reported views was found. Choose another video to continue.</string>
+    <string name="autoplay_minimum_views">Free videos with at least 10 reported views. Unavailable counts are skipped.</string>
 </resources>
