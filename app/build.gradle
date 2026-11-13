@@ -25,7 +25,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase)
-        versionCode 1705
+        versionCode 1706
         versionName "0.18.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,7 +56,7 @@ android {
 
     buildTypes {
         debug {
-            versionNameSuffix "-community-alpha.3"
+            versionNameSuffix "-community"
             Properties twitterProps = new Properties()
             if (project.file('twitter.properties').exists()) {
                 project.file('twitter.properties').withInputStream { twitterProps.load(it) }
@@ -66,7 +66,7 @@ android {
         }
         release {
             buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase.startsWith("https://") ? sponsorBase : "")
-            versionNameSuffix "-community-alpha.3"
+            versionNameSuffix "-community"
             Properties twitterProps = new Properties()
             if (project.file('twitter.properties').exists()) {
                 project.file('twitter.properties').withInputStream { twitterProps.load(it) }
