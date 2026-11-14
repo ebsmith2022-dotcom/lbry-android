@@ -18,6 +18,7 @@ import java.io.PrintStream;
 
 import io.lbry.browser.MainActivity;
 import io.lbry.browser.R;
+import io.lbry.browser.utils.ThemeMode;
 import io.lbry.browser.utils.Helper;
 import io.lbry.browser.utils.LbryAnalytics;
 import io.lbry.lbrysdk.Utils;
@@ -25,6 +26,7 @@ import io.lbry.lbrysdk.Utils;
 public class SettingsFragment extends PreferenceFragmentCompat implements SharedPreferences.OnSharedPreferenceChangeListener {
     @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
+        ThemeMode.migrate(PreferenceManager.getDefaultSharedPreferences(requireContext()));
         setPreferencesFromResource(R.xml.settings, rootKey);
         PreferenceManager manager = getPreferenceManager();
 
@@ -81,9 +83,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sp, String key) {
-        if (key.equalsIgnoreCase(MainActivity.PREFERENCE_KEY_DARK_MODE)) {
-            boolean darkMode = sp.getBoolean(MainActivity.PREFERENCE_KEY_DARK_MODE, false);
-            AppCompatDelegate.setDefaultNightMode(darkMode ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        if (ThemeMode.KEY.equals(key)) {
+            AppCompatDelegate.setDefaultNightMode(ThemeMode.nightMode(sp.getString(ThemeMode.KEY, "system")));
         } else if (key.equalsIgnoreCase(MainActivity.PREFERENCE_KEY_PARTICIPATE_DATA_NETWORK)) {
             boolean dhtEnabled = sp.getBoolean(MainActivity.PREFERENCE_KEY_PARTICIPATE_DATA_NETWORK, false);
             updateDHTFileSetting(dhtEnabled);

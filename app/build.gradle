@@ -25,8 +25,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase)
-        versionCode 1712
-        versionName "0.18.9"
+        versionCode 1713
+        versionName "0.18.10"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 

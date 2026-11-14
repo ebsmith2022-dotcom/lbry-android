@@ -217,6 +217,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import okhttp3.OkHttpClient;
+import io.lbry.browser.utils.ThemeMode;
 import io.lbry.browser.connection.SdkStatusRequest;
 
 import static android.os.Build.VERSION_CODES.M;
@@ -432,7 +433,10 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         } catch (Exception ex) {
             // pass (don't fail initialization on some _weird_ device implementations)
         }
-        AppCompatDelegate.setDefaultNightMode(isDarkMode() ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+        SharedPreferences themePreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        ThemeMode.migrate(themePreferences);
+        AppCompatDelegate.setDefaultNightMode(ThemeMode.nightMode(
+                themePreferences.getString(ThemeMode.KEY, "system")));
 
         initKeyStore();
         loadAuthToken();
@@ -665,7 +669,11 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     public boolean isDarkMode() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        return sp.getBoolean(PREFERENCE_KEY_DARK_MODE, false);
+        int mode = ThemeMode.nightMode(sp.getString(ThemeMode.KEY, "system"));
+        if (mode == AppCompatDelegate.MODE_NIGHT_YES) return true;
+        if (mode == AppCompatDelegate.MODE_NIGHT_NO) return false;
+        return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
+                == Configuration.UI_MODE_NIGHT_YES;
     }
 
     public boolean isBackgroundPlaybackEnabled() {

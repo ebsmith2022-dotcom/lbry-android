@@ -15,9 +15,13 @@
             app:defaultValue="true"
             app:title="@string/enable_autoplay"
             app:iconSpaceReserved="false" />
-        <SwitchPreferenceCompat
-            app:key="io.lbry.browser.preference.userinterface.DarkMode"
-            app:title="@string/enable_dark_mode"
+        <ListPreference
+            app:key="io.lbry.browser.preference.userinterface.ThemeMode"
+            app:title="@string/theme_mode_title"
+            app:entries="@array/theme_mode_labels"
+            app:entryValues="@array/theme_mode_values"
+            app:defaultValue="system"
+            app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <SwitchPreferenceCompat
             app:key="io.lbry.browser.preference.userinterface.ShowMatureContent"
