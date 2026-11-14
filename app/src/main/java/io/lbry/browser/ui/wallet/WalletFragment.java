@@ -89,7 +89,6 @@ public class WalletFragment extends BaseFragment implements SdkStatusListener, W
     private MaterialButton buttonSignUp;
     private RecyclerView recentTransactionsList;
     private View linkViewAll;
-    private TextView textConvertCredits;
     private TextView textWhatSyncMeans;
     private TextView textWalletReceiveAddress;
     private TextView textWalletHintSyncStatus;
@@ -134,7 +133,6 @@ public class WalletFragment extends BaseFragment implements SdkStatusListener, W
         recentTransactionsList = root.findViewById(R.id.wallet_recent_transactions_list);
         linkViewAll = root.findViewById(R.id.wallet_link_view_all);
         textNoRecentTransactions = root.findViewById(R.id.wallet_no_recent_transactions);
-        textConvertCredits = root.findViewById(R.id.wallet_hint_convert_credits);
         textWhatSyncMeans = root.findViewById(R.id.wallet_hint_what_sync_means);
         textWalletReceiveAddress = root.findViewById(R.id.wallet_receive_address);
         buttonCopyReceiveAddress = root.findViewById(R.id.wallet_copy_receive_address);
@@ -245,7 +243,6 @@ public class WalletFragment extends BaseFragment implements SdkStatusListener, W
     private void initUi() {
         onWalletBalanceUpdated(Lbry.walletBalance);
 
-        Helper.applyHtmlForTextView(textConvertCredits);
         Helper.applyHtmlForTextView(textWhatSyncMeans);
         Helper.applyHtmlForTextView(linkManualBackup);
         Helper.applyHtmlForTextView(linkSyncFAQ);
