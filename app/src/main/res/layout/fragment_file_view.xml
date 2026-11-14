@@ -194,6 +194,34 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
+                <LinearLayout
+                    android:id="@+id/video_cast_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+                    <androidx.mediarouter.app.MediaRouteButton
+                        android:id="@+id/video_cast_picker"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:contentDescription="@string/community_cast_choose" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/video_cast_play"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/community_cast_play" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/video_cast_here"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/community_cast_here" />
+                </LinearLayout>
+
                 <include layout="@layout/sponsor_banner" />
 
                 <include

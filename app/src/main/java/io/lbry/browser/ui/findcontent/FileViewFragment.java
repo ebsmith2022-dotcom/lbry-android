@@ -66,7 +66,6 @@ import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.source.hls.HlsMediaSource;
-import com.google.android.exoplayer2.ui.PlayerControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
@@ -197,8 +196,7 @@ public class FileViewFragment extends BaseFragment implements
     private static final String DEFAULT_PLAYBACK_SPEED = "1x";
     public static final String CDN_PREFIX = "https://cdn.lbryplayer.xyz";
 
-    private PlayerControlView castControlView;
-    private Player currentPlayer;
+    private VideoCastController videoCastController;
     private boolean loadingNewClaim;
     private boolean autoplayNextRequested;
     private io.lbry.browser.autoplay.AutoplayController autoplayNext;
@@ -890,6 +888,7 @@ public class FileViewFragment extends BaseFragment implements
         if (autoplayNext != null) { autoplayNext.stop(); autoplayNext = null; }
         if (sponsorBanner != null) { sponsorBanner.stop(); sponsorBanner = null; }
         if (communityLikes != null) { communityLikes.stop(); communityLikes = null; }
+        if (videoCastController != null) { videoCastController.close(); videoCastController = null; }
         super.onDestroyView();
     }
 
@@ -1272,12 +1271,9 @@ public class FileViewFragment extends BaseFragment implements
             }
         });
 
-        root.findViewById(R.id.player_toggle_cast).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                toggleCast();
-            }
-        });
+        if (videoCastController != null) videoCastController.close();
+        videoCastController = new VideoCastController(requireActivity(), root,
+                () -> claim, FileViewFragment::resolvePublicStream);
 
         PlayerView playerView = root.findViewById(R.id.file_view_exoplayer_view);
         View playbackSpeedContainer = playerView.findViewById(R.id.player_playback_speed);
@@ -1968,48 +1964,6 @@ public class FileViewFragment extends BaseFragment implements
         }
         return new ProgressiveMediaSource.Factory(dataSource, new DefaultExtractorsFactory())
                 .setLoadErrorHandlingPolicy(errorPolicy).createMediaSource(MediaItem.fromUri(mediaUri));
-    }
-
-    private void setCurrentPlayer(Player currentPlayer) {
-        if (this.currentPlayer == currentPlayer) {
-            return;
-        }
-
-        // View management.
-        if (currentPlayer == MainActivity.appPlayer) {
-            //localPlayerView.setVisibility(View.VISIBLE);
-            castControlView.hide();
-            ((ImageView) getView().findViewById(R.id.player_image_cast_toggle)).setImageResource(R.drawable.ic_cast);
-        } else /* currentPlayer == castPlayer */ {
-            castControlView.show();
-            ((ImageView) getView().findViewById(R.id.player_image_cast_toggle)).setImageResource(R.drawable.ic_cast_connected);
-        }
-
-        // Player state management.
-        long playbackPositionMs = C.TIME_UNSET;
-        int windowIndex = C.INDEX_UNSET;
-        boolean playWhenReady = false;
-
-        Player previousPlayer = this.currentPlayer;
-        if (previousPlayer != null) {
-            // Save state from the previous player.
-            int playbackState = previousPlayer.getPlaybackState();
-            if (playbackState != Player.STATE_ENDED) {
-                playbackPositionMs = previousPlayer.getCurrentPosition();
-                playWhenReady = previousPlayer.getPlayWhenReady();
-            }
-            previousPlayer.stop();
-            previousPlayer.clearMediaItems();
-        }
-
-        this.currentPlayer = currentPlayer;
-
-        // Media queue management.
-        /*if (currentPlayer == exoPlayer) {
-            exoPlayer.prepare(concatenatingMediaSource);
-        }*/
-        currentPlayer.seekTo(playbackPositionMs);
-        currentPlayer.setPlayWhenReady(true);
     }
 
     private void resetViewCount() {
@@ -2926,19 +2880,6 @@ public class FileViewFragment extends BaseFragment implements
         Context context = getContext();
         if (context instanceof MainActivity) {
             ((MainActivity) context).showFloatingWalletBalance();
-        }
-    }
-
-    private void toggleCast() {
-        if (!MainActivity.castPlayer.isCastSessionAvailable()) {
-            showError(getString(R.string.no_cast_session_available));
-            return;
-        }
-
-        if (currentPlayer == MainActivity.appPlayer) {
-            setCurrentPlayer(MainActivity.castPlayer);
-        } else {
-            setCurrentPlayer(MainActivity.appPlayer);
         }
     }
 
