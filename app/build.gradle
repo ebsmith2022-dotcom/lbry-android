@@ -25,8 +25,8 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase)
-        versionCode 1711
-        versionName "0.18.8"
+        versionCode 1712
+        versionName "0.18.9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -46,7 +46,7 @@ android {
         __64bit {
             minSdkVersion 24
             // Refresh the extracted SDK code when installing over an earlier debug APK.
-            resValue 'string', 'private_version', '0.102.0-play-1'
+            resValue 'string', 'private_version', '0.102.0-community-headers-2'
             versionCode android.defaultConfig.versionCode * 10 + 4
             ndk {
                 abiFilter "arm64-v8a"

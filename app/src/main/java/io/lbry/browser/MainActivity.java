@@ -217,6 +217,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import okhttp3.OkHttpClient;
+import io.lbry.browser.connection.SdkStatusRequest;
 
 import static android.os.Build.VERSION_CODES.M;
 import static android.os.Build.VERSION_CODES.P;
@@ -1113,6 +1114,9 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     @Override
     protected void onDestroy() {
         shuttingDown = true;
+        sdkActivityResumed = false;
+        stopSdkChecks();
+        sdkStartHandler.removeCallbacks(ensureSdkService);
         unregisterReceivers();
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
         if (receivedStopService || !isServiceRunning(this, LbrynetService.class)) {
@@ -1136,7 +1140,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         }
         appStarted = false;
 
-        if (!keepSdkBackground()) {
+        if (!keepSdkBackground() && !isChangingConfigurations()) {
             sendBroadcast(new Intent(LbrynetService.ACTION_STOP_SERVICE).setPackage(getPackageName()));
         }
 
@@ -1224,6 +1228,22 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     private final Handler sdkStartHandler = new Handler(android.os.Looper.getMainLooper());
     private boolean sdkActivityResumed;
     private int sdkStartAttempts;
+    private boolean sdkReadyDelivered;
+    private final Runnable pollSdkStatus = () -> {
+        if (!sdkActivityResumed || shuttingDown || !isFirstRunCompleted()) return;
+        if (checkSdkReadyTask != null) return;
+        checkSdkReadyTask = new CheckSdkReadyTask(this);
+        checkSdkReadyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    };
+
+    private void stopSdkChecks() {
+        sdkStartHandler.removeCallbacks(pollSdkStatus);
+        if (checkSdkReadyTask != null) {
+            checkSdkReadyTask.request.cancel();
+            checkSdkReadyTask.cancel(true);
+            checkSdkReadyTask = null;
+        }
+    }
     private final Runnable ensureSdkService = new Runnable() {
         @Override public void run() {
             if (!sdkActivityResumed || isFinishing() || isDestroyed() || !isFirstRunCompleted()) return;
@@ -1260,6 +1280,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             }
         }
         sdkActivityResumed = true;
+        sdkReadyDelivered = false;
         sdkStartAttempts = 0;
         sdkStartHandler.removeCallbacks(ensureSdkService);
         // Wait until Android has recorded this activity as foreground, resetting
@@ -1300,6 +1321,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     @Override
     protected void onPause() {
         sdkActivityResumed = false;
+        stopSdkChecks();
         sdkStartHandler.removeCallbacks(ensureSdkService);
         PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
         if (!enteringPIPMode && !inPictureInPictureMode && appPlayer != null && !isBackgroundPlaybackEnabled()) {
@@ -1816,20 +1838,10 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     private void checkSdkReady() {
-        if (!Lbry.SDK_READY) {
-            new Handler().postDelayed(() -> {
-                if (checkSdkReadyTask != null && checkSdkReadyTask.getStatus() != AsyncTask.Status.FINISHED) {
-                    // task already running
-                    return;
-                }
-                checkSdkReadyTask = new CheckSdkReadyTask(MainActivity.this, sdkStatusListeners);
-                checkSdkReadyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            }, CHECK_SDK_READY_INTERVAL);
-        } else {
-            scheduleWalletBalanceUpdate();
-            scheduleWalletSyncTask();
-            initFloatingWalletBalance();
-        }
+        // Always verify the local daemon on return; SDK_READY may describe a
+        // previous service process. Keep a single request and scheduled poll.
+        sdkStartHandler.removeCallbacks(pollSdkStatus);
+        if (sdkActivityResumed && !shuttingDown) sdkStartHandler.post(pollSdkStatus);
     }
 
     public void onSdkReady() {
@@ -3309,51 +3321,57 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     private static class CheckSdkReadyTask extends AsyncTask<Void, Void, Boolean> {
-        private final Context context;
-        private final List<SdkStatusListener> listeners;
+        private final MainActivity activity;
+        private final okhttp3.Call request = SdkStatusRequest.newCall();
 
-        public CheckSdkReadyTask(Context context, List<SdkStatusListener> listeners) {
-            this.context = context;
-            this.listeners = new ArrayList<>(listeners);
+        CheckSdkReadyTask(MainActivity activity) {
+            this.activity = activity;
         }
 
         public Boolean doInBackground(Void... params) {
-            boolean sdkReady = false;
-            try {
-                String response = Utils.sdkCall("status");
-                if (response != null) {
-                    JSONObject result = new JSONObject(response);
-                    JSONObject status = result.getJSONObject("result");
-                    if (!Lbry.IS_STATUS_PARSED) {
-                        Lbry.parseStatus(status.toString());
-                    }
-
-                    // TODO: Broadcast startup status changes
-                    JSONObject startupStatus = status.getJSONObject("startup_status");
-                    sdkReady = startupStatus.getBoolean("file_manager") && startupStatus.getBoolean("wallet");
-                }
-            } catch (ConnectException | JSONException ex) {
-                // pass
+            try (okhttp3.Response response = request.execute()) {
+                if (!response.isSuccessful() || response.body() == null || isCancelled()) return false;
+                JSONObject status = new JSONObject(response.body().string()).getJSONObject("result");
+                if (isCancelled()) return false;
+                if (!Lbry.IS_STATUS_PARSED) Lbry.parseStatus(status.toString());
+                JSONObject startup = status.getJSONObject("startup_status");
+                return startup.optBoolean("file_manager") && startup.optBoolean("wallet");
+            } catch (java.io.IOException | JSONException ex) {
+                // A stopped or busy local daemon is normal during reconnect.
+                // Never log the status response, which may contain wallet data.
+                return false;
             }
-
-            return sdkReady;
         }
-        protected void onPostExecute(Boolean sdkReady) {
-            Lbry.SDK_READY = sdkReady;
-            if (context != null) {
-                if (sdkReady) {
-                    context.sendBroadcast(new Intent(ACTION_SDK_READY).setPackage(context.getPackageName()));
 
-                    // update listeners
-                    for (SdkStatusListener listener : listeners) {
-                        if (listener != null) {
-                            listener.onSdkReady();
-                        }
+        protected void onPostExecute(Boolean ready) {
+            if (isCancelled() || activity.checkSdkReadyTask != this ||
+                    !activity.sdkActivityResumed || activity.shuttingDown) return;
+            activity.checkSdkReadyTask = null;
+            Lbry.SDK_READY = ready;
+            if (ready) {
+                activity.sdkStartAttempts = 0;
+                if (!activity.sdkReadyDelivered) {
+                    activity.sdkReadyDelivered = true;
+                    activity.sendBroadcast(new Intent(ACTION_SDK_READY)
+                            .setPackage(activity.getPackageName()));
+                    // Listeners can change while the request is in flight.
+                    for (SdkStatusListener listener : new ArrayList<>(activity.sdkStatusListeners)) {
+                        if (listener != null) listener.onSdkReady();
                     }
-                } else if (context instanceof MainActivity) {
-                    ((MainActivity) context).checkSdkReady();
+                }
+            } else {
+                activity.sdkReadyDelivered = false;
+                // Restart only a missing service, never a live daemon that is
+                // still syncing. Keep the existing bounded foreground retries.
+                if (!isServiceRunning(activity, LbrynetService.class)) {
+                    Lbry.IS_STATUS_PARSED = false;
+                    activity.sdkStartHandler.removeCallbacks(activity.ensureSdkService);
+                    activity.sdkStartHandler.postDelayed(activity.ensureSdkService, 500);
                 }
             }
+            activity.sdkStartHandler.removeCallbacks(activity.pollSdkStatus);
+            activity.sdkStartHandler.postDelayed(activity.pollSdkStatus,
+                    ready ? 15000 : activity.CHECK_SDK_READY_INTERVAL);
         }
     }
 
