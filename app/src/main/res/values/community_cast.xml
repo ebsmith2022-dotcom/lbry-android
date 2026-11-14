@@ -4,7 +4,7 @@
     <string name="community_cast_choose">Choose Chromecast</string>
     <string name="community_cast_here">Play here</string>
     <string name="community_cast_play">Play on TV</string>
-    <string name="community_cast_connect">Choose a Chromecast on the same Wi-Fi first.</string>
+    <string name="community_cast_connect">Tap the Cast icon and select your Chromecast to connect.</string>
     <string name="community_cast_free">Start a free video before casting. Purchased and local-only videos are not supported yet.</string>
     <string name="community_cast_loading">Connecting this video to your TV…</string>
     <string name="community_cast_failed">This video could not play on Chromecast. You can continue on your phone.</string>

@@ -29,6 +29,7 @@ final class VideoCastController implements SessionManagerListener<CastSession> {
     private final Supplier<Claim> claimSupplier;
     private final Function<Claim, Uri> resolveStream;
     private SessionManager sessions;
+    private MediaRouteButton routeButton;
     private boolean closed;
     private boolean loading;
     private int generation;
@@ -52,8 +53,8 @@ final class VideoCastController implements SessionManagerListener<CastSession> {
         this.resolveStream = resolveStream;
         try {
             sessions = CastContext.getSharedInstance(activity).getSessionManager();
-            CastButtonFactory.setUpMediaRouteButton(activity,
-                    (MediaRouteButton) root.findViewById(R.id.video_cast_picker));
+            routeButton = root.findViewById(R.id.video_cast_picker);
+            CastButtonFactory.setUpMediaRouteButton(activity, routeButton);
             sessions.addSessionManagerListener(this, CastSession.class);
             root.findViewById(R.id.video_cast_play).setOnClickListener(v -> castVideo());
             root.findViewById(R.id.video_cast_here).setOnClickListener(v -> playHere());
@@ -71,7 +72,11 @@ final class VideoCastController implements SessionManagerListener<CastSession> {
         if (closed || loading || sessions == null) return;
         CastSession session = sessions.getCurrentCastSession();
         if (session == null || !session.isConnected() || session.getRemoteMediaClient() == null) {
-            message(R.string.community_cast_connect);
+            if (session != null && session.isConnecting()) {
+                message(R.string.community_cast_loading);
+            } else if (routeButton == null || !routeButton.showDialog()) {
+                message(R.string.community_cast_connect);
+            }
             return;
         }
         Claim claim = claimSupplier.get();
