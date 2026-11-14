@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="theme_mode_title">App theme</string>
-    <string name="theme_mode_system">Follow system</string>
-    <string name="theme_mode_light">Light</string>
-    <string name="theme_mode_dark">Dark</string>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- New community setting: use English until translations are contributed. -->
+    <string tools:ignore="MissingTranslation" name="theme_mode_title">App theme</string>
+    <string tools:ignore="MissingTranslation" name="theme_mode_system">Follow system</string>
+    <string tools:ignore="MissingTranslation" name="theme_mode_light">Light</string>
+    <string tools:ignore="MissingTranslation" name="theme_mode_dark">Dark</string>
     <string-array name="theme_mode_labels">
         <item>@string/theme_mode_system</item>
         <item>@string/theme_mode_light</item>
