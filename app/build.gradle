@@ -25,6 +25,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 36
         buildConfigField "String", "SPONSOR_BASE_URL", groovy.json.JsonOutput.toJson(sponsorBase)
+        buildConfigField "String", "AI_SUMMARY_BASE_URL", groovy.json.JsonOutput.toJson(providers.gradleProperty('aiSummaryBaseUrl').getOrElse(''))
         versionCode 1714
         versionName "0.18.11"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

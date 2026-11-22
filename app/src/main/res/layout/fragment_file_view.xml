@@ -222,6 +222,26 @@
                         android:text="@string/community_cast_here" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/video_summary_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/video_summary_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/video_summary_button" />
+                    <TextView
+                        android:id="@+id/video_summary_status"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/video_summary_scope"
+                        android:accessibilityLiveRegion="polite" />
+                </LinearLayout>
                 <include layout="@layout/sponsor_banner" />
 
                 <include

@@ -67,3 +67,6 @@ app/twitter.properties
 app/build
 bin
 app/debuglib
+
+# Local AI prototype bytecode
+summary-server/__pycache__/
