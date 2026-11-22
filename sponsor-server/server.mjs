@@ -42,6 +42,9 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
   if (!db.prepare('PRAGMA table_info(campaigns)').all().some(c => c.name === 'complimentary_reason')) {
     db.exec('ALTER TABLE campaigns ADD COLUMN complimentary_reason TEXT');
   }
+  const columns = db.prepare('PRAGMA table_info(campaigns)').all().map(c => c.name);
+  if (!columns.includes('deleted_at')) db.exec('ALTER TABLE campaigns ADD COLUMN deleted_at INTEGER');
+  if (!columns.includes('renewed_from')) db.exec('ALTER TABLE campaigns ADD COLUMN renewed_from TEXT');
   const metrics = analytics(db, clock);
   const app = express();
   app.disable('x-powered-by');
@@ -73,7 +76,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     if (req.method !== 'GET' && req.get('x-csrf-token') !== req.admin.csrf) return res.status(403).json({ error: 'Refresh the dashboard and try again.' });
     next();
   };
-  const active = row => row && row.status === 'approved' && (row.txid || row.complimentary_reason) && row.starts <= clock() && row.ends > clock() && db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled;
+  const active = row => row && row.deleted_at == null && row.status === 'approved' && (row.txid || row.complimentary_reason) && row.starts <= clock() && row.ends > clock() && db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled;
   const audit = (id, action) => db.prepare('INSERT INTO audit(campaign,action,created) VALUES(?,?,?)').run(id, action, clock());
   app.post('/api/login', (req, res) => {
     const now = clock(), ip = req.ip;
@@ -124,8 +127,8 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     res.status(204).end();
   });
   app.get('/api/campaigns', requireAdmin, (req, res) => {
-    const rows = db.prepare('SELECT id,sponsor,destination,starts,ends,amount,status,txid,complimentary_reason,created FROM campaigns ORDER BY created DESC').all();
-    res.json({ campaigns: rows.map(row => ({ ...row, live: !!active(row) })), enabled: !!db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled,
+    const rows = db.prepare('SELECT id,sponsor,destination,starts,ends,amount,status,txid,complimentary_reason,created,deleted_at,renewed_from FROM campaigns ORDER BY created DESC').all();
+    res.json({ campaigns: rows.filter(row => req.query.deleted === '1' ? row.deleted_at != null : row.deleted_at == null).map(row => ({ ...row, live: !!active(row) })), enabled: !!db.prepare('SELECT enabled FROM settings WHERE id=1').get().enabled,
       audit: db.prepare('SELECT campaign,action,created FROM audit ORDER BY id DESC LIMIT 50').all() });
   });
   app.post('/api/campaigns', requireAdmin, async (req, res) => {
@@ -152,6 +155,44 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     const row = db.prepare('SELECT * FROM campaigns WHERE id=?').get(req.params.id);
     if (!row) return res.status(404).json({ error: 'Campaign not found.' });
     const action = req.params.action;
+    if (action === 'restore') {
+      if (row.deleted_at == null) return res.status(409).json({ error: 'This campaign is not deleted.' });
+      db.prepare("UPDATE campaigns SET deleted_at=NULL,status=CASE WHEN status='approved' THEN 'paused' ELSE status END WHERE id=?").run(row.id);
+      audit(row.id, 'Restored from deleted ads; delivery remains off');
+      return res.json({ ok: true });
+    }
+    if (row.deleted_at != null) return res.status(409).json({ error: 'Restore this deleted campaign before changing it.' });
+    if (action === 'delete') {
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare('UPDATE campaigns SET deleted_at=? WHERE id=?').run(clock(), row.id);
+        db.prepare('DELETE FROM ad_receipts WHERE campaign=?').run(row.id);
+        audit(row.id, 'Deleted from campaign list; reports retained');
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return res.json({ ok: true });
+    }
+    if (action === 'renew') {
+      const { starts, ends, amount } = req.body || {};
+      if (row.ends > clock()) return res.status(409).json({ error: 'Only expired campaigns can be renewed.' });
+      if (!Number.isSafeInteger(starts) || !Number.isSafeInteger(ends) || ends <= starts || ends <= clock() ||
+          !Number.isFinite(new Date(starts).getTime()) || !Number.isFinite(new Date(ends).getTime()) ||
+          typeof amount !== 'string' || !/^\d{1,10}(\.\d{1,8})?$/.test(amount)) {
+        return res.status(400).json({ error: 'Choose valid new dates and a non-negative LBC amount.' });
+      }
+      const existing = db.prepare("SELECT id FROM campaigns WHERE renewed_from=? AND deleted_at IS NULL AND ends>? AND status!='rejected'").get(row.id, clock());
+      if (existing) return res.status(409).json({ error: 'A current renewal already exists. Find it in Campaigns instead of renewing again.' });
+      const id = randomUUID();
+      db.exec('BEGIN IMMEDIATE');
+      try {
+        db.prepare('INSERT INTO campaigns(id,sponsor,destination,starts,ends,amount,image,created,renewed_from) VALUES(?,?,?,?,?,?,?,?,?)')
+          .run(id, row.sponsor, row.destination, starts, ends, amount, row.image, clock(), row.id);
+        audit(id, 'Renewal created for review from ' + row.id);
+        audit(row.id, 'Renewal draft created: ' + id);
+        db.exec('COMMIT');
+      } catch (error) { db.exec('ROLLBACK'); throw error; }
+      return res.status(201).json({ id });
+    }
     if (action === 'payment') {
       const txid = req.body?.txid;
       if (row.status !== 'pending' || row.txid || row.complimentary_reason || Number(row.amount) <= 0 || !/^[a-fA-F0-9]{64}$/.test(txid || '') || req.body?.confirmed !== true) return res.status(400).json({ error: 'Confirm the amount and receiving address in your wallet, then enter the 64-character transaction ID. Payment can only be recorded once, while pending.' });
@@ -181,7 +222,7 @@ export function createApp({ dataDir, adminHash, clock = Date.now, secure = false
     audit(null, req.body.enabled ? 'All ads enabled' : 'All ads stopped'); res.json({ ok: true });
   });
   app.get('/v1/banner', (req, res) => {
-    const rows = db.prepare("SELECT id,sponsor,destination,starts,ends,status,txid,complimentary_reason FROM campaigns WHERE status='approved' AND starts<=? AND ends>? ORDER BY created").all(clock(), clock()).filter(active);
+    const rows = db.prepare("SELECT id,sponsor,destination,starts,ends,status,txid,complimentary_reason,deleted_at FROM campaigns WHERE deleted_at IS NULL AND status='approved' AND starts<=? AND ends>? ORDER BY created").all(clock(), clock()).filter(active);
     if (!rows.length) return res.status(204).end();
     const row = rows[Math.floor(Math.random() * rows.length)];
     // No private payment records, wallet identity or viewer identifiers in this API.

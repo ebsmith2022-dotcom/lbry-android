@@ -60,7 +60,7 @@ export function analytics(db, clock) {
     report(period, day) {
       purge();
       const range = reportRange(period, day);
-      const campaigns = db.prepare(`SELECT c.id,c.sponsor,COALESCE(SUM(d.impressions),0) AS impressions,COALESCE(SUM(d.clicks),0) AS clicks
+      const campaigns = db.prepare(`SELECT c.id,c.sponsor,c.starts,c.ends,c.deleted_at,c.renewed_from,COALESCE(SUM(d.impressions),0) AS impressions,COALESCE(SUM(d.clicks),0) AS clicks
         FROM campaigns c LEFT JOIN ad_daily d ON d.campaign=c.id AND d.day>=? AND d.day<?
         GROUP BY c.id ORDER BY impressions DESC,c.sponsor`).all(range.start, range.end);
       return { period, date: day, today: localDay(clock()), timezone: REPORT_TIMEZONE, ...range, campaigns };

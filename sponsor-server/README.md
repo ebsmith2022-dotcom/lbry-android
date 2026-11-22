@@ -110,3 +110,13 @@ nginx limits like requests to 30/minute/IP with a burst of 20; count polling is 
 Android version 0.18.3-community-alpha.3, code 17054, uses the HTTPS community service by default; loopback remains an explicit test override. The previous local service APK remains separate as an old output. Debug-only instrumentation fixtures are non-exported and excluded from release builds.
 
 Validation for the likes update: 16 backend tests passed locally/on-server; a two-voter HTTPS smoke test passed and removed its synthetic data. Two isolated emulator tests passed (LikeController and sponsor impressions), 11 existing URI unit tests passed, and Android lint passed with the existing translation baseline. Final debug APK uses the live HTTPS endpoint and the existing debug signing certificate. A clean temporary Gradle build directory avoided an iCloud-generated duplicate class file blocking the old output directory.
+
+## Delete, restore and renew campaigns — 22 November 2026
+
+Delete moves a campaign to **Deleted ads**, stops public delivery/images, and revokes outstanding tracking receipts. It preserves the creative, payment record, audit history and performance totals. Restore returns it to the main list; a formerly approved ad returns paused and must be approved again. No existing campaign is changed merely by installing this update.
+
+Expired campaigns offer **Renew expired campaign** with a new start, end and agreed LBC amount. Renewal copies the banner/name/destination into a new pending campaign. Old transaction IDs and complimentary reasons do not carry over: record a new payment or owner complimentary reason, then approve. Each renewal has separate impression/click totals; reports include dates and Deleted/Renewal labels. Duplicate current renewals of the same source are rejected. All actions require the existing owner session, same-origin request and CSRF token.
+
+The additive SQLite migration adds nullable `deleted_at` and `renewed_from` columns. Back up the database before deployment. Tests cover delivery revocation, preserved reporting, restored paused state, new-payment enforcement, expiry/date validation, duplicate renewal protection and owner/CSRF checks. Local browser QA verified renewal creation, deletion and restore using a disposable campaign.
+
+Deployment verified on the existing DigitalOcean service. The live HTML/JavaScript and all deployed source hashes match the tested files; owner-only endpoints still return 401 when unauthenticated. SQLite integrity passed and all six existing campaign records were preserved. Private pre-update source/database backups are under `/var/backups/lbry-sponsors/lifecycle-20261122T152300Z`. No real ads were deleted or renewed during deployment.

@@ -13,6 +13,7 @@ async function run(action) { try { await action(); } catch (error) { message(err
 $('login-form').onsubmit = event => { event.preventDefault(); run(async () => { const result = await api('/api/login', { password: $('password').value }); csrf = result.csrf; $('password').value = ''; await refresh(); message(''); }); };
 $('logout').onclick = () => run(async () => { await api('/api/logout', {}); showLogin(); message('Signed out.'); });
 $('refresh').onclick = () => run(refresh);
+$('campaign-filter').onchange = () => run(refresh);
 $('switch').onclick = () => run(async () => { if (!confirm(enabled ? 'Stop all sponsor delivery?' : 'Enable approved campaigns within their scheduled dates?')) return; await api('/api/switch', { enabled: !enabled }); await refresh(); });
 function localDate(date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16); }
 const form = $('create-form'); form.elements.starts.value = localDate(new Date()); form.elements.ends.value = localDate(new Date(Date.now() + 7 * 86400_000));
@@ -27,29 +28,58 @@ form.onsubmit = event => { event.preventDefault(); run(async () => {
   if (objectUrl) URL.revokeObjectURL(objectUrl); await refresh(); message('Draft saved. Confirm payment or record a complimentary reason, then approve.');
 }); };
 async function refresh() {
-  const data = await api('/api/campaigns'); showDashboard(); enabled = data.enabled;
+  const deletedView = $('campaign-filter').value === 'deleted';
+  const data = await api('/api/campaigns' + (deletedView ? '?deleted=1' : ''));
+  const current = deletedView ? await api('/api/campaigns') : data; showDashboard(); enabled = data.enabled;
   $('delivery').textContent = enabled ? 'On' : 'Stopped'; $('switch').textContent = enabled ? 'Stop all ads' : 'Enable ads';
-  $('count-live').textContent = data.campaigns.filter(c => c.live).length; $('count-review').textContent = data.campaigns.filter(c => c.status === 'pending').length;
+  $('count-live').textContent = current.campaigns.filter(c => c.live).length; $('count-review').textContent = current.campaigns.filter(c => c.status === 'pending').length;
+  $('empty').textContent = deletedView ? 'No deleted ads.' : 'No campaigns yet. Create a draft to get started.';
   $('campaigns').replaceChildren(); $('empty').hidden = data.campaigns.length > 0;
   for (const c of data.campaigns) {
     const fragment = $('campaign-template').content.cloneNode(true), card = fragment.querySelector('article');
     card.querySelector('h3').textContent = c.sponsor;
-    const expired = c.ends <= Date.now();
-    card.querySelector('.status').textContent = expired ? 'Expired' : c.live ? 'Live' : c.status === 'approved' ? (c.starts > Date.now() ? 'Scheduled' : 'Delivery stopped') : c.status;
+    const expired = c.ends <= Date.now(), deleted = c.deleted_at != null;
+    card.querySelector('.status').textContent = deleted ? 'Deleted' : expired ? 'Expired' : c.live ? 'Live' : c.status === 'approved' ? (c.starts > Date.now() ? 'Scheduled' : 'Delivery stopped') : c.status;
     card.querySelector('.sponsor-label').textContent = `Sponsored · ${c.sponsor}`;
     card.querySelector('img').src = `/v1/images/${c.id}`;
     const link = card.querySelector('.destination'); link.textContent = c.destination; link.href = c.destination;
     card.querySelector('.dates').textContent = `${new Date(c.starts).toLocaleString()} → ${new Date(c.ends).toLocaleString()}`;
     card.querySelector('.payment').textContent = c.complimentary_reason ? `Complimentary / test · No payment required · ${c.complimentary_reason}` : `${c.amount} LBC · ${c.txid ? 'Payment manually confirmed' : 'Payment not confirmed'}`;
-    card.querySelector('.payment-details').hidden = !!(c.txid || c.complimentary_reason) || Number(c.amount) <= 0 || c.status !== 'pending' || expired;
-    card.querySelector('.complimentary-details').hidden = !!(c.txid || c.complimentary_reason) || c.status !== 'pending' || expired;
+    card.querySelector('.payment-details').hidden = deleted || !!(c.txid || c.complimentary_reason) || Number(c.amount) <= 0 || c.status !== 'pending' || expired;
+    card.querySelector('.complimentary-details').hidden = deleted || !!(c.txid || c.complimentary_reason) || c.status !== 'pending' || expired;
     card.querySelector('.complimentary-form').onsubmit = event => { event.preventDefault(); run(async () => { await api(`/api/campaigns/${c.id}/complimentary`, { reason: event.target.elements.reason.value }); await refresh(); message('Complimentary reason recorded. Click Approve when ready.'); }); };
     card.querySelector('.payment-form').onsubmit = event => { event.preventDefault(); run(async () => { await api(`/api/campaigns/${c.id}/payment`, { txid: event.target.elements.txid.value, confirmed: event.target.elements.confirmed.checked }); await refresh(); message('Payment recorded. The banner still needs your approval.'); }); };
     for (const action of ['approve', 'pause', 'reject']) {
       const button = card.querySelector(`.${action}`);
-      button.hidden = action === 'approve' ? !((c.txid || c.complimentary_reason) && ['pending', 'paused'].includes(c.status) && !expired) : action === 'pause' ? c.status !== 'approved' : c.status === 'rejected';
+      button.hidden = deleted || (action === 'approve' ? !((c.txid || c.complimentary_reason) && ['pending', 'paused'].includes(c.status) && !expired) : action === 'pause' ? c.status !== 'approved' : c.status === 'rejected');
       if (action === 'approve' && c.status === 'paused') button.textContent = 'Resume';
-      button.onclick = () => run(async () => { if (!confirm(`${action === 'approve' ? 'Approve this banner and destination' : action === 'pause' ? 'Pause this campaign' : 'Permanently reject/remove this campaign'} for ${c.sponsor}?`)) return; await api(`/api/campaigns/${c.id}/${action}`, {}); await refresh(); message('Campaign updated. App refreshes take up to about one minute.'); });
+      button.onclick = () => run(async () => { if (!confirm(`${action === 'approve' ? 'Approve this banner and destination' : action === 'pause' ? 'Pause this campaign' : 'Reject this campaign'} for ${c.sponsor}?`)) return; await api(`/api/campaigns/${c.id}/${action}`, {}); await refresh(); message('Campaign updated. App refreshes take up to about one minute.'); });
+    }
+    card.querySelector('.renewal-label').hidden = !c.renewed_from;
+    card.querySelector('.renew-details').hidden = deleted || !expired;
+    const renewal = card.querySelector('.renew-form');
+    renewal.elements.starts.value = localDate(new Date());
+    renewal.elements.ends.value = localDate(new Date(Date.now() + 7 * 86400_000));
+    renewal.elements.amount.value = c.amount;
+    renewal.onsubmit = event => { event.preventDefault(); run(async () => {
+      const submit = renewal.querySelector('button'); submit.disabled = true;
+      try {
+        await api(`/api/campaigns/${c.id}/renew`, { starts: new Date(renewal.elements.starts.value).getTime(), ends: new Date(renewal.elements.ends.value).getTime(), amount: renewal.elements.amount.value });
+        await refresh(); message('Renewal draft created. Confirm the new payment or mark it complimentary, then approve.');
+      } finally { submit.disabled = false; }
+    }); };
+    for (const action of ['delete', 'restore']) {
+      const button = card.querySelector('.' + action);
+      button.hidden = action === 'delete' ? deleted : !deleted;
+      button.onclick = () => run(async () => {
+        const prompt = action === 'delete' ? `Delete ${c.sponsor}? Delivery will stop and the ad will move to Deleted ads. Reports are kept and you can restore it.` : `Restore ${c.sponsor}? It will stay off until you renew or approve it.`;
+        if (!confirm(prompt)) return;
+        button.disabled = true;
+        try {
+          await api(`/api/campaigns/${c.id}/${action}`, {}); await refresh();
+          message(action === 'delete' ? 'Ad deleted. You can restore it from Deleted ads. App refreshes take up to about one minute.' : 'Ad restored. Review its dates before renewing or approving.');
+        } finally { button.disabled = false; }
+      });
     }
     $('campaigns').append(fragment);
   }
@@ -71,7 +101,8 @@ async function refreshMetrics() {
   $('metrics-rows').replaceChildren();
   for (const campaign of report.campaigns) {
     const tr = document.createElement('tr');
-    for (const value of [campaign.sponsor, campaign.impressions.toLocaleString(), campaign.clicks.toLocaleString(), campaign.impressions ? (campaign.clicks / campaign.impressions * 100).toFixed(2) + '%' : '—']) {
+    const campaignLabel = `${campaign.sponsor}${campaign.deleted_at != null ? ' · Deleted' : ''}${campaign.renewed_from ? ' · Renewal' : ''} · ${new Date(campaign.starts).toLocaleDateString()}–${new Date(campaign.ends).toLocaleDateString()}`;
+    for (const value of [campaignLabel, campaign.impressions.toLocaleString(), campaign.clicks.toLocaleString(), campaign.impressions ? (campaign.clicks / campaign.impressions * 100).toFixed(2) + '%' : '—']) {
       const td = document.createElement('td'); td.textContent = value; tr.append(td);
     }
     $('metrics-rows').append(tr);
