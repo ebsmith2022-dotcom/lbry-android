@@ -241,6 +241,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     private boolean inPictureInPictureMode;
     @Getter
     private boolean inFullscreenMode;
+    private boolean uriBarExpanded;
+    private boolean searchKeyboardVisible;
     // make tip unlock a global operation
     @Getter
     private boolean unlockingTips;
@@ -466,6 +468,13 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             findViewById(R.id.floating_balance_main_container).setTranslationY(-bottom);
             findViewById(R.id.global_now_playing_card).setTranslationY(0);
             boolean keyboard = insets.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime());
+            if (uriBarExpanded) {
+                // Back can dismiss the keyboard without clearing EditText focus.
+                if (searchKeyboardVisible && !keyboard) {
+                    clearWunderbarFocus(findViewById(R.id.wunderbar));
+                }
+                searchKeyboardVisible = keyboard;
+            }
             findViewById(R.id.cinema_navigation).setVisibility(keyboard || inFullscreenMode || inPictureInPictureMode ? View.GONE : View.VISIBLE);
             return insets;
         });
@@ -1371,12 +1380,23 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     private void toggleUrlSuggestions(boolean visible) {
         View container = findViewById(R.id.url_suggestions_container);
-        View closeIcon = findViewById(R.id.wunderbar_close);
-        //EditText wunderbar = findViewById(R.id.wunderbar);
-        //wunderbar.setPadding(0, 0, visible ? getScaledValue(36) : 0, 0);
-
         container.setVisibility(visible ? View.VISIBLE : View.GONE);
-        closeIcon.setVisibility(visible ? View.VISIBLE : View.GONE);
+    }
+
+    private void setUriBarExpanded(boolean expanded) {
+        if (expanded && !uriBarExpanded) {
+            WindowInsetsCompat insets = ViewCompat.getRootWindowInsets(findViewById(R.id.wunderbar));
+            searchKeyboardVisible = insets != null && insets.isVisible(WindowInsetsCompat.Type.ime());
+        }
+        uriBarExpanded = expanded;
+        findViewById(R.id.wunderbar_search).setVisibility(expanded ? View.GONE : View.VISIBLE);
+        findViewById(R.id.wunderbar_close).setVisibility(expanded ? View.VISIBLE : View.GONE);
+        findViewById(R.id.wunderbar_notifications).setVisibility(expanded ? View.INVISIBLE : View.VISIBLE);
+        findViewById(R.id.wunderbar).setVisibility(expanded ? View.VISIBLE : View.GONE);
+        if (!expanded) {
+            searchKeyboardVisible = false;
+            toggleUrlSuggestions(false);
+        }
     }
 
     public int getScaledValue(int value) {
@@ -1396,6 +1416,18 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     private void setupUriBar() {
+        findViewById(R.id.wunderbar_search).setOnClickListener(view -> {
+            EditText input = findViewById(R.id.wunderbar);
+            setUriBarExpanded(true);
+            input.requestFocus();
+            input.selectAll();
+            input.post(() -> {
+                if (uriBarExpanded && input.hasFocus()) {
+                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.showSoftInput(input, InputMethodManager.SHOW_IMPLICIT);
+                }
+            });
+        });
         findViewById(R.id.wunderbar_close).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -1408,20 +1440,14 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             @Override
             public void onFocusChange(View view, boolean hasFocus) {
                 if (hasFocus) {
+                    setUriBarExpanded(true);
                     hideNotifications();
-                    findViewById(R.id.wunderbar_notifications).setVisibility(View.INVISIBLE);
-
-                    InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-                    imm.showSoftInput(view, 0);
-                } else {
-                    findViewById(R.id.wunderbar_notifications).setVisibility(View.VISIBLE);
-                }
-
-                if (canShowUrlSuggestions()) {
-                    toggleUrlSuggestions(hasFocus);
-                    if (hasFocus && Helper.isNullOrEmpty(Helper.getValue(((EditText) view).getText()))) {
-                        displayUrlSuggestionsForNoInput();
+                    if (canShowUrlSuggestions()) {
+                        toggleUrlSuggestions(true);
+                        handleUriInputChanged(Helper.getValue(((EditText) view).getText()).trim());
                     }
+                } else {
+                    setUriBarExpanded(false);
                 }
             }
         });
@@ -1434,7 +1460,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (charSequence != null && canShowUrlSuggestions()) {
+                if (charSequence != null && wunderbar.hasFocus() && canShowUrlSuggestions()) {
                     handleUriInputChanged(charSequence.toString().trim());
                 }
             }
@@ -1447,7 +1473,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         wunderbar.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                if (actionId == EditorInfo.IME_ACTION_GO) {
+                if (actionId == EditorInfo.IME_ACTION_GO || actionId == EditorInfo.IME_ACTION_SEARCH ||
+                        (keyEvent != null && keyEvent.getKeyCode() == KeyEvent.KEYCODE_ENTER && keyEvent.getAction() == KeyEvent.ACTION_UP)) {
                     String input = Helper.getValue(wunderbar.getText());
                     boolean handled = false;
                     if (input.startsWith(LbryUri.PROTO_DEFAULT) && !input.equalsIgnoreCase(LbryUri.PROTO_DEFAULT)) {
@@ -1519,6 +1546,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     public void clearWunderbarFocus(View view) {
         findViewById(R.id.wunderbar).clearFocus();
+        setUriBarExpanded(false);
         findViewById(R.id.app_bar_main_container).requestFocus();
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
@@ -2541,7 +2569,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     @Override
     public void onBackPressed() {
-        if (findViewById(R.id.url_suggestions_container).getVisibility() == View.VISIBLE) {
+        if (uriBarExpanded || findViewById(R.id.url_suggestions_container).getVisibility() == View.VISIBLE) {
             clearWunderbarFocus(findViewById(R.id.wunderbar));
             return;
         }
