@@ -32,6 +32,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.ViewHolder> {
+    private boolean cinemaFeed;
+    public void setCinemaFeed(boolean enabled) { cinemaFeed = enabled; }
+    private static final int VIEW_TYPE_CINEMA = 4;
     private static final int VIEW_TYPE_STREAM = 1;
     private static final int VIEW_TYPE_CHANNEL = 2;
     private static final int VIEW_TYPE_FEATURED = 3; // featured search result
@@ -234,6 +237,7 @@ public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.View
         }
 
         Claim claim = items.get(position);
+        if (cinemaFeed && position == 0 && Claim.TYPE_STREAM.equalsIgnoreCase(claim.getValueType())) return VIEW_TYPE_CINEMA;
         String valueType = items.get(position).getValueType();
         Claim actualClaim = Claim.TYPE_REPOST.equalsIgnoreCase(valueType) ? claim.getRepostedClaim() : claim;
 
@@ -306,12 +310,24 @@ public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.View
     public ClaimListAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         int viewResourceId = -1;
         switch (viewType) {
+            case VIEW_TYPE_CINEMA: viewResourceId = R.layout.list_item_cinema; break;
             case VIEW_TYPE_FEATURED: viewResourceId = R.layout.list_item_featured_search_result; break;
             case VIEW_TYPE_CHANNEL: viewResourceId = R.layout.list_item_channel; break;
             case VIEW_TYPE_STREAM: default: viewResourceId = R.layout.list_item_stream; break;
         }
 
         View v = LayoutInflater.from(context).inflate(viewResourceId, parent, false);
+        if (viewType == VIEW_TYPE_CINEMA) {
+            View media = v.findViewById(R.id.claim_media_container);
+            media.getLayoutParams().height = (int) ((context.getResources().getDisplayMetrics().widthPixels - 32 * scale) * 9 / 16);
+            media.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+                int height = Math.round((right - left) * 9f / 16f);
+                if (height > 0 && view.getLayoutParams().height != height) {
+                    view.getLayoutParams().height = height;
+                    view.requestLayout();
+                }
+            });
+        }
         return new ClaimListAdapter.ViewHolder(v);
     }
 
@@ -335,7 +351,13 @@ public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.View
             streamMetadata = (Claim.StreamMetadata) metadata;
         }
 
-        String thumbnailUrl = item.getThumbnailUrl(vh.thumbnailView.getLayoutParams().width, vh.thumbnailView.getLayoutParams().height, 85);
+        int thumbnailWidth = vh.thumbnailView.getLayoutParams().width;
+        int thumbnailHeight = vh.thumbnailView.getLayoutParams().height;
+        if (type == VIEW_TYPE_CINEMA) {
+            thumbnailWidth = Math.max(1, context.getResources().getDisplayMetrics().widthPixels - Math.round(32 * scale));
+            thumbnailHeight = Math.round(thumbnailWidth * 9f / 16f);
+        }
+        String thumbnailUrl = item.getThumbnailUrl(thumbnailWidth, thumbnailHeight, 85);
         long publishTime = (streamMetadata != null && streamMetadata.getReleaseTime() > 0) ? streamMetadata.getReleaseTime() * 1000 : item.getTimestamp() * 1000;
         int bgColor = Helper.generateRandomColorForValue(item.getClaimId());
         if (bgColor == 0) {

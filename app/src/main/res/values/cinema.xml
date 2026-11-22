@@ -1,0 +1,5 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- New preview labels use English until translations are available. -->
+    <string name="cinema_home" tools:ignore="MissingTranslation">Home</string>
+    <string name="cinema_upload" tools:ignore="MissingTranslation">Upload</string>
+</resources>

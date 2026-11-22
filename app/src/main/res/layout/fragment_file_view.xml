@@ -194,36 +194,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
 
-                <LinearLayout
-                    android:id="@+id/video_cast_bar"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:paddingStart="16dp"
-                    android:paddingEnd="16dp"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal">
-                    <androidx.mediarouter.app.MediaRouteButton
-                        android:id="@+id/video_cast_picker"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:contentDescription="@string/community_cast_choose" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/video_cast_play"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/community_cast_play" />
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/video_cast_here"
-                        style="@style/Widget.MaterialComponents.Button.TextButton"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/community_cast_here" />
-                </LinearLayout>
-
-                <include layout="@layout/sponsor_banner" />
-
                 <include
                     layout="@layout/card_reward_driver"
                     android:layout_width="match_parent"
@@ -251,10 +221,11 @@
 
                         <TextView
                             android:id="@+id/file_view_title"
+                            android:textColor="@color/darkForeground"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:fontFamily="@font/inter"
-                            android:textSize="16sp"
+                            android:textSize="20sp"
                             android:textStyle="bold" />
 
                         <LinearLayout
@@ -294,9 +265,150 @@
                         app:tint="@color/foreground" />
                 </RelativeLayout>
 
-                <include layout="@layout/community_likes" />
-                <include layout="@layout/autoplay_next" />
+                <RelativeLayout
+                    android:id="@+id/file_view_publisher_area"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
+                    <LinearLayout
+                        android:id="@+id/file_view_publisher_info_area"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_toStartOf="@id/file_view_publisher_area_actions"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:paddingStart="16dp"
+                        android:paddingTop="12dp"
+                        android:paddingBottom="12dp">
+
+                        <RelativeLayout
+                            android:id="@+id/file_view_publisher_avatar"
+                            android:layout_width="50dp"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="16dp"
+                            android:visibility="gone">
+
+                            <RelativeLayout
+                                android:id="@+id/file_view_publisher_no_thumbnail"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:layout_centerHorizontal="true"
+                                android:background="@drawable/bg_channel_icon">
+
+                                <TextView
+                                    android:id="@+id/file_view_publisher_thumbnail_alpha"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_centerInParent="true"
+                                    android:fontFamily="@font/inter"
+                                    android:textAllCaps="true"
+                                    android:textColor="@color/white"
+                                    android:textFontWeight="300"
+                                    android:textSize="18sp" />
+                            </RelativeLayout>
+
+                            <ImageView
+                                android:id="@+id/file_view_publisher_thumbnail"
+                                android:layout_width="50dp"
+                                android:layout_height="50dp"
+                                android:layout_centerHorizontal="true" />
+                        </RelativeLayout>
+
+                        <LinearLayout
+                            android:id="@+id/file_view_publisher_name_area"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:id="@+id/file_view_publisher_title"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/inter"
+                                android:textFontWeight="300"
+                                android:textSize="14sp"
+                                android:visibility="gone" />
+
+                            <TextView
+                                android:id="@+id/file_view_publisher_name"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:fontFamily="@font/inter"
+                                android:textColor="@color/lbryGreen"
+                                android:textFontWeight="600"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/file_view_publisher_area_actions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:id="@+id/file_view_icon_follow"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:orientation="horizontal"
+                            android:paddingTop="8dp"
+                            android:paddingBottom="8dp">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_marginStart="16dp"
+                                android:fontFamily="@font/inter"
+                                android:text="@string/follow"
+                                android:textAllCaps="true"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+
+                            <io.lbry.browser.ui.controls.OutlineIconView
+                                android:layout_width="24dp"
+                                android:layout_height="24dp"
+                                android:layout_marginStart="16dp"
+                                android:layout_marginEnd="16dp"
+                                android:text="@string/fa_heart"
+                                android:textColor="@color/red"
+                                android:textSize="20dp" />
+                        </LinearLayout>
+
+                        <io.lbry.browser.ui.controls.SolidIconView
+                            android:id="@+id/file_view_icon_unfollow"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginEnd="16dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:text="@string/fa_heart_broken"
+                            android:textColor="@color/foreground"
+                            android:textSize="20dp"
+                            android:visibility="gone" />
+
+                        <io.lbry.browser.ui.controls.SolidIconView
+                            android:id="@+id/file_view_icon_bell"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="16dp"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:text="@string/fa_bell_slash"
+                            android:textColor="@color/foreground"
+                            android:textSize="20dp"
+                            android:visibility="gone" />
+                    </LinearLayout>
+                </RelativeLayout>
+
+                <include layout="@layout/community_likes" />
                 <LinearLayout
                     android:id="@+id/file_view_actions_area"
                     android:layout_width="match_parent"
@@ -582,6 +694,40 @@
                             android:textSize="12sp" />
                     </LinearLayout>
                 </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/video_cast_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+                    <androidx.mediarouter.app.MediaRouteButton
+                        android:id="@+id/video_cast_picker"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:contentDescription="@string/community_cast_choose" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/video_cast_play"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/community_cast_play" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/video_cast_here"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/community_cast_here" />
+                </LinearLayout>
+
+                <include layout="@layout/sponsor_banner" />
+
+
+                <include layout="@layout/autoplay_next" />
+
+
 
                 <View
                     android:layout_width="match_parent"
@@ -589,148 +735,7 @@
                     android:layout_marginTop="12dp"
                     android:background="@color/divider" />
 
-                <RelativeLayout
-                    android:id="@+id/file_view_publisher_area"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
 
-                    <LinearLayout
-                        android:id="@+id/file_view_publisher_info_area"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_toStartOf="@id/file_view_publisher_area_actions"
-                        android:background="?attr/selectableItemBackground"
-                        android:clickable="true"
-                        android:paddingStart="16dp"
-                        android:paddingTop="12dp"
-                        android:paddingBottom="12dp">
-
-                        <RelativeLayout
-                            android:id="@+id/file_view_publisher_avatar"
-                            android:layout_width="50dp"
-                            android:layout_height="50dp"
-                            android:layout_gravity="center_vertical"
-                            android:layout_marginEnd="16dp"
-                            android:visibility="gone">
-
-                            <RelativeLayout
-                                android:id="@+id/file_view_publisher_no_thumbnail"
-                                android:layout_width="50dp"
-                                android:layout_height="50dp"
-                                android:layout_centerHorizontal="true"
-                                android:background="@drawable/bg_channel_icon">
-
-                                <TextView
-                                    android:id="@+id/file_view_publisher_thumbnail_alpha"
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:layout_centerInParent="true"
-                                    android:fontFamily="@font/inter"
-                                    android:textAllCaps="true"
-                                    android:textColor="@color/white"
-                                    android:textFontWeight="300"
-                                    android:textSize="24sp" />
-                            </RelativeLayout>
-
-                            <ImageView
-                                android:id="@+id/file_view_publisher_thumbnail"
-                                android:layout_width="50dp"
-                                android:layout_height="50dp"
-                                android:layout_centerHorizontal="true" />
-                        </RelativeLayout>
-
-                        <LinearLayout
-                            android:id="@+id/file_view_publisher_name_area"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center_vertical"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:id="@+id/file_view_publisher_title"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/inter"
-                                android:textFontWeight="300"
-                                android:textSize="14sp"
-                                android:visibility="gone" />
-
-                            <TextView
-                                android:id="@+id/file_view_publisher_name"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:fontFamily="@font/inter"
-                                android:textColor="@color/lbryGreen"
-                                android:textFontWeight="600"
-                                android:textSize="14sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/file_view_publisher_area_actions"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:orientation="horizontal">
-
-                        <LinearLayout
-                            android:id="@+id/file_view_icon_follow"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:orientation="horizontal"
-                            android:paddingTop="8dp"
-                            android:paddingBottom="8dp">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
-                                android:layout_marginStart="16dp"
-                                android:fontFamily="@font/inter"
-                                android:text="@string/follow"
-                                android:textAllCaps="true"
-                                android:textSize="12sp"
-                                android:textStyle="bold" />
-
-                            <io.lbry.browser.ui.controls.OutlineIconView
-                                android:layout_width="24dp"
-                                android:layout_height="24dp"
-                                android:layout_marginStart="16dp"
-                                android:layout_marginEnd="16dp"
-                                android:text="@string/fa_heart"
-                                android:textColor="@color/red"
-                                android:textSize="20dp" />
-                        </LinearLayout>
-
-                        <io.lbry.browser.ui.controls.SolidIconView
-                            android:id="@+id/file_view_icon_unfollow"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_marginStart="16dp"
-                            android:layout_marginEnd="16dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:text="@string/fa_heart_broken"
-                            android:textColor="@color/foreground"
-                            android:textSize="20dp"
-                            android:visibility="gone" />
-
-                        <io.lbry.browser.ui.controls.SolidIconView
-                            android:id="@+id/file_view_icon_bell"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_marginEnd="16dp"
-                            android:background="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:text="@string/fa_bell_slash"
-                            android:textColor="@color/foreground"
-                            android:textSize="20dp"
-                            android:visibility="gone" />
-                    </LinearLayout>
-                </RelativeLayout>
 
                 <View
                     android:layout_width="match_parent"

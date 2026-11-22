@@ -607,6 +607,7 @@ public class FollowingFragment extends BaseFragment implements
                     Context context = getContext();
                     if (context != null) {
                         contentListAdapter = new ClaimListAdapter(claims, context);
+                        contentListAdapter.setCinemaFeed(true);
                         contentListAdapter.setListener(new ClaimListAdapter.ClaimListItemListener() {
                             @Override
                             public void onClaimClicked(Claim claim) {

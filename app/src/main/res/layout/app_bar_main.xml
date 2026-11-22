@@ -31,7 +31,8 @@
                 android:layout_height="wrap_content">
                 <EditText
                     android:id="@+id/wunderbar"
-                    android:background="@android:color/transparent"
+                    android:background="@drawable/cinema_panel"
+                    android:minHeight="48dp" android:paddingStart="12dp"
                     android:layout_centerVertical="true"
                     android:drawableStart="@drawable/ic_search"
                     android:drawablePadding="8dp"

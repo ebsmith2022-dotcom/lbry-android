@@ -13,11 +13,21 @@
         android:background="@color/pageBackground"
         android:fitsSystemWindows="true"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_margin="0dp"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/cinema_navigation" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/cinema_navigation"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:minHeight="64dp" android:background="@color/actionBarBackground"
+        app:elevation="8dp" app:labelVisibilityMode="labeled"
+        app:itemHorizontalTranslationEnabled="false"
+        app:itemIconTint="@color/cinema_navigation" app:itemTextColor="@color/cinema_navigation"
+        app:menu="@menu/cinema_navigation" app:layout_constraintBottom_toBottomOf="parent" />
 
     <RelativeLayout
         android:id="@+id/url_suggestions_container"
@@ -95,7 +105,7 @@
         android:elevation="12dp"
         android:padding="8dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toTopOf="@id/cinema_navigation">
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -464,7 +464,9 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.drawer_layout), (view, insets) -> {
             int bottom = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom;
             findViewById(R.id.floating_balance_main_container).setTranslationY(-bottom);
-            findViewById(R.id.global_now_playing_card).setTranslationY(-bottom);
+            findViewById(R.id.global_now_playing_card).setTranslationY(0);
+            boolean keyboard = insets.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime());
+            findViewById(R.id.cinema_navigation).setVisibility(keyboard || inFullscreenMode || inPictureInPictureMode ? View.GONE : View.VISIBLE);
             return insets;
         });
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -634,6 +636,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             }
         });
         navItemsView.setAdapter(navMenuAdapter);
+        setupCinemaNavigation();
 
         findViewById(R.id.sign_out_button).setOnClickListener(view ->
                 new AlertDialog.Builder(this)
@@ -856,6 +859,30 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         fetchClaimsListeners.remove(listener);
     }
 
+    private void setupCinemaNavigation() {
+        com.google.android.material.bottomnavigation.BottomNavigationView navigation = findViewById(R.id.cinema_navigation);
+        navigation.setOnNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            selectedMenuItemId = id == R.id.cinema_home ? NavMenuItem.ID_ITEM_ALL_CONTENT :
+                    id == R.id.cinema_following ? NavMenuItem.ID_ITEM_FOLLOWING :
+                    id == R.id.cinema_upload ? NavMenuItem.ID_ITEM_NEW_PUBLISH :
+                    id == R.id.cinema_wallet ? NavMenuItem.ID_ITEM_WALLET : NavMenuItem.ID_ITEM_LIBRARY;
+            navMenuAdapter.setCurrentItem(selectedMenuItemId);
+            openSelectedMenuItem();
+            return true;
+        });
+        getSupportFragmentManager().registerFragmentLifecycleCallbacks(new androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks() {
+            @Override public void onFragmentResumed(androidx.fragment.app.FragmentManager manager, Fragment fragment) {
+                int id = fragment instanceof AllContentFragment ? R.id.cinema_home :
+                        fragment instanceof FollowingFragment ? R.id.cinema_following :
+                        fragment instanceof PublishFragment ? R.id.cinema_upload :
+                        fragment instanceof WalletFragment ? R.id.cinema_wallet :
+                        fragment instanceof LibraryFragment ? R.id.cinema_library : 0;
+                if (id != 0) navigation.getMenu().findItem(id).setChecked(true);
+            }
+        }, false);
+    }
+
     private void openSelectedMenuItem() {
         hideNotifications();
 
@@ -1050,6 +1077,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     private void renderPictureInPictureMode() {
+        findViewById(R.id.cinema_navigation).setVisibility(View.GONE);
         findViewById(R.id.content_main).setVisibility(View.GONE);
         findViewById(R.id.floating_balance_main_container).setVisibility(View.GONE);
         findViewById(R.id.global_now_playing_card).setVisibility(View.GONE);
@@ -1080,6 +1108,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     private void renderFullMode() {
+        findViewById(R.id.cinema_navigation).setVisibility(inFullscreenMode ? View.GONE : View.VISIBLE);
         if (!inFullscreenMode) {
             showActionBar();
         } else {
@@ -1088,15 +1117,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
         findViewById(R.id.content_main).setVisibility(View.VISIBLE);
         Fragment fragment = getCurrentFragment();
-        boolean canShowFloatingBalance = fragment == null ||
-                fragment instanceof FollowingFragment ||
-                fragment instanceof FileViewFragment ||
-                fragment instanceof ChannelFragment ||
-                fragment instanceof EditorsChoiceFragment ||
-                fragment instanceof AllContentFragment ||
-                fragment instanceof LibraryFragment ||
-                fragment instanceof SearchFragment;
-        findViewById(R.id.floating_balance_main_container).setVisibility(!canShowFloatingBalance || inFullscreenMode ? View.INVISIBLE : View.VISIBLE);
+        findViewById(R.id.floating_balance_main_container).setVisibility(View.GONE);
         if (!(fragment instanceof FileViewFragment) && !(fragment instanceof ShuffleFragment) && !inFullscreenMode && nowPlayingClaim != null) {
             findViewById(R.id.global_now_playing_card).setVisibility(View.VISIBLE);
         }
@@ -1735,6 +1756,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     public void enterFullScreenMode() {
         inFullscreenMode = true;
+        findViewById(R.id.cinema_navigation).setVisibility(View.GONE);
         hideFloatingWalletBalance();
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
@@ -1781,6 +1803,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         }
         unlockDrawer();
         inFullscreenMode = false;
+        findViewById(R.id.cinema_navigation).setVisibility(View.VISIBLE);
     }
 
     private void initKeyStore() {
@@ -1810,7 +1833,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
         fetchRewards();
         if (getSupportFragmentManager().getBackStackEntryCount() == 0) {
-            openFragment(FollowingFragment.class, false, NavMenuItem.ID_ITEM_FOLLOWING);
+            openFragment(AllContentFragment.class, false, NavMenuItem.ID_ITEM_ALL_CONTENT);
         }
     }
 
@@ -2077,7 +2100,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     public void showFloatingWalletBalance() {
-        findViewById(R.id.floating_balance_main_container).setVisibility(View.VISIBLE);
+        // Wallet is always accessible from the Cinema navigation bar.
+        findViewById(R.id.floating_balance_main_container).setVisibility(View.GONE);
     }
     public void hideFloatingWalletBalance() {
         findViewById(R.id.floating_balance_main_container).setVisibility(View.GONE);
@@ -3080,7 +3104,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         if (fragment != null) {
             openFragment(fragment, true);
         } else {
-            openFragment(FollowingFragment.class, false, NavMenuItem.ID_ITEM_FOLLOWING);
+            openFragment(AllContentFragment.class, false, NavMenuItem.ID_ITEM_ALL_CONTENT);
         }
     }
 
