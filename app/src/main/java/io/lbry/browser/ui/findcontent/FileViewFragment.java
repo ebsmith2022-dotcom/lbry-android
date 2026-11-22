@@ -197,7 +197,6 @@ public class FileViewFragment extends BaseFragment implements
     public static final String CDN_PREFIX = "https://cdn.lbryplayer.xyz";
 
     private VideoCastController videoCastController;
-    private io.lbry.browser.summary.VideoSummaryController videoSummary;
     private boolean loadingNewClaim;
     private boolean autoplayNextRequested;
     private io.lbry.browser.autoplay.AutoplayController autoplayNext;
@@ -278,7 +277,6 @@ public class FileViewFragment extends BaseFragment implements
         View root = inflater.inflate(R.layout.fragment_file_view, container, false);
         sponsorBanner = new io.lbry.browser.sponsors.SponsorBannerController(root);
         communityLikes = new io.lbry.browser.likes.LikeController(root);
-        videoSummary = new io.lbry.browser.summary.VideoSummaryController(root);
 
         layoutLoadingState = root.findViewById(R.id.file_view_loading_state);
         layoutNothingAtLocation = root.findViewById(R.id.container_nothing_at_location);
@@ -674,7 +672,6 @@ public class FileViewFragment extends BaseFragment implements
     private void onNewClaim(String url) {
         if (autoplayNext != null) autoplayNext.cancel();
         if (communityLikes != null) communityLikes.bind(null);
-        if (videoSummary != null) videoSummary.bind(null);
         loadingNewClaim = true;
         initialFileLoadDone = false;
         playbackStarted = false;
@@ -818,7 +815,6 @@ public class FileViewFragment extends BaseFragment implements
         if (autoplayNext != null) autoplayNext.start();
         if (sponsorBanner != null) sponsorBanner.start();
         if (communityLikes != null) communityLikes.start();
-        if (videoSummary != null) videoSummary.start();
         checkParams();
 
         Context context = getContext();
@@ -862,7 +858,6 @@ public class FileViewFragment extends BaseFragment implements
         if (autoplayNext != null) autoplayNext.stop();
         if (sponsorBanner != null) sponsorBanner.stop();
         if (communityLikes != null) communityLikes.stop();
-        if (videoSummary != null) videoSummary.stop();
         if (MainActivity.appPlayer != null) {
             MainActivity.nowPlayingSource = MainActivity.SOURCE_NOW_PLAYING_FILE;
         }
@@ -893,7 +888,6 @@ public class FileViewFragment extends BaseFragment implements
         if (autoplayNext != null) { autoplayNext.stop(); autoplayNext = null; }
         if (sponsorBanner != null) { sponsorBanner.stop(); sponsorBanner = null; }
         if (communityLikes != null) { communityLikes.stop(); communityLikes = null; }
-        if (videoSummary != null) { videoSummary.stop(); videoSummary = null; }
         if (videoCastController != null) { videoCastController.close(); videoCastController = null; }
         super.onDestroyView();
     }
@@ -1581,7 +1575,6 @@ public class FileViewFragment extends BaseFragment implements
 
     private void renderClaim() {
         if (communityLikes != null) communityLikes.bind(claim != null && claim.isPlayable() ? claim.getClaimId() : null);
-        if (videoSummary != null) videoSummary.bind(claim);
         if (claim == null) {
             return;
         }
