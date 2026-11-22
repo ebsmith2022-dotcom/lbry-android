@@ -2,4 +2,7 @@
     <!-- New preview labels use English until translations are available. -->
     <string name="cinema_home" tools:ignore="MissingTranslation">Home</string>
     <string name="cinema_upload" tools:ignore="MissingTranslation">Upload</string>
+    <string name="cinema_close_menu" tools:ignore="MissingTranslation">Close menu</string>
+    <string name="cinema_your_account" tools:ignore="MissingTranslation">Your account</string>
+    <string name="cinema_settings_help" tools:ignore="MissingTranslation">Settings &amp; help</string>
 </resources>

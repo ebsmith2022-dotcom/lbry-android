@@ -637,6 +637,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         });
         navItemsView.setAdapter(navMenuAdapter);
         setupCinemaNavigation();
+        findViewById(R.id.cinema_drawer_close).setOnClickListener(view -> closeDrawer());
 
         findViewById(R.id.sign_out_button).setOnClickListener(view ->
                 new AlertDialog.Builder(this)
@@ -2756,12 +2757,10 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
 
     private void applyNavbarSigninPadding() {
-        int statusBarHeight = getStatusBarHeight();
-
-        View signInButton = findViewById(R.id.sign_in_button_container);
-        View signedInEmailContainer = findViewById(R.id.signed_in_email_container);
-        signInButton.setPadding(0, statusBarHeight, 0, 0);
-        signedInEmailContainer.setPadding(0, statusBarHeight, 0, 0);
+        // The whole branded header clears the status bar, independent of sign-in state.
+        View header = findViewById(R.id.cinema_drawer_header);
+        header.setPadding(getScaledValue(16), getStatusBarHeight() + getScaledValue(16),
+                getScaledValue(16), getScaledValue(12));
     }
 
     private void signOut() {
@@ -2802,7 +2801,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         findViewById(R.id.signed_in_email_container).setVisibility(signedIn ? View.VISIBLE : View.GONE);
         ((TextView) findViewById(R.id.signed_in_email)).setText(Lbryio.getSignedInEmail());
         findViewById(R.id.sign_in_header_divider).setBackgroundColor(
-                ContextCompat.getColor(this, signedIn ? R.color.lightDivider : R.color.lbryGreen));
+                ContextCompat.getColor(this, R.color.divider));
     }
 
     private Fragment getCurrentFragment() {
@@ -3281,7 +3280,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         NavMenuItem findContentGroup = new NavMenuItem(NavMenuItem.ID_GROUP_FIND_CONTENT, R.string.find_content, true, context);
         NavMenuItem yourContentGroup = new NavMenuItem(NavMenuItem.ID_GROUP_YOUR_CONTENT, R.string.your_content, true, context);
         NavMenuItem walletGroup = new NavMenuItem(NavMenuItem.ID_GROUP_WALLET, R.string.wallet, true, context);
-        NavMenuItem otherGroup = new NavMenuItem(NavMenuItem.ID_GROUP_OTHER, 0, true, context);
+        NavMenuItem otherGroup = new NavMenuItem(NavMenuItem.ID_GROUP_OTHER, R.string.cinema_settings_help, true, context);
 
         findContentGroup.setItems(Arrays.asList(
                 new NavMenuItem(NavMenuItem.ID_ITEM_FOLLOWING, R.string.fa_heart, R.string.following, "Following", context),

@@ -1,12 +1,14 @@
 package io.lbry.browser.adapter;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.view.ViewCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +99,19 @@ public class NavigationMenuAdapter extends RecyclerView.Adapter<NavigationMenuAd
         if (type == TYPE_ITEM && vh.iconView != null) {
             vh.iconView.setText(item.getIcon());
         }
-        vh.itemView.setSelected(item.equals(currentItem));
+        boolean selected = type == TYPE_ITEM && currentItem != null && item.getId() == currentItem.getId();
+        vh.itemView.setSelected(selected);
+        ViewCompat.setAccessibilityHeading(vh.titleView, type == TYPE_GROUP);
+        if (type == TYPE_GROUP) {
+            vh.itemView.findViewById(R.id.nav_menu_group_divider).setVisibility(position == 0 ? View.GONE : View.VISIBLE);
+            // Section labels are headings, not navigation destinations.
+            vh.itemView.setOnClickListener(null);
+            vh.itemView.setClickable(false);
+            vh.itemView.setFocusable(false);
+            return;
+        }
+        vh.titleView.setTypeface(vh.titleView.getTypeface(), selected ? Typeface.BOLD : Typeface.NORMAL);
+        vh.itemView.findViewById(R.id.nav_menu_selected_indicator).setVisibility(selected ? View.VISIBLE : View.INVISIBLE);
         vh.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {

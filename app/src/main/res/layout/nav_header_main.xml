@@ -1,82 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cinema_drawer_header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:gravity="bottom"
     android:orientation="vertical"
-    android:background="@color/pageBackground"
-    android:theme="@style/ThemeOverlay.AppCompat.Dark">
+    android:paddingStart="16dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="12dp"
+    android:background="@color/drawerBackground">
 
-    <RelativeLayout
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="56dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <ImageView
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@mipmap/ic_launcher"
+            android:importantForAccessibility="no" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:fontFamily="@font/inter"
+            android:text="@string/app_name"
+            android:textColor="@color/darkForeground"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+        <ImageButton
+            android:id="@+id/cinema_drawer_close"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:padding="14dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cinema_close_menu"
+            android:src="@drawable/ic_close"
+            app:tint="@color/lightForeground" />
+    </LinearLayout>
+
+    <LinearLayout
         android:id="@+id/sign_in_button_container"
-        android:background="@color/lbryGreen"
-        android:clickable="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="52dp"
+        android:layout_marginTop="12dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:background="@drawable/cinema_panel"
         android:foreground="?attr/selectableItemBackground"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <RelativeLayout
+        android:clickable="true"
+        android:focusable="true">
+        <TextView
             android:id="@+id/sign_in_button"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom"
-            android:background="@color/lbryGreen"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:gravity="center"
-                android:text="@string/sign_in"
-                android:fontFamily="@font/inter"
-                android:textSize="14sp"
-                android:textFontWeight="600"
-                android:textAllCaps="true" />
-        </RelativeLayout>
-    </RelativeLayout>
+            android:layout_weight="1"
+            android:fontFamily="@font/inter"
+            android:text="@string/sign_in"
+            android:textColor="@color/cinemaAccent"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_arrow_right"
+            android:importantForAccessibility="no"
+            app:tint="@color/cinemaAccent" />
+    </LinearLayout>
 
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/signed_in_email_container"
-        android:background="@color/drawerBackground"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:paddingStart="16dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="16dp"
+        android:orientation="vertical"
+        android:background="@drawable/cinema_panel"
         android:visibility="gone">
-        <RelativeLayout
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="16dp"
-            android:paddingBottom="16dp">
-            <TextView
-                android:id="@+id/signed_in_email"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_marginStart="16dp"
-                android:layout_marginEnd="16dp"
-                android:ellipsize="middle"
-                android:fontFamily="@font/inter"
-                android:gravity="center"
-                android:singleLine="true"
-                android:textSize="14sp"
-                android:textAllCaps="true"
-                android:textColor="@color/menuItemForeground"
-                android:textFontWeight="300" />
-            <Button
-                android:id="@+id/sign_out_button"
-                style="?android:attr/borderlessButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_below="@id/signed_in_email"
-                android:layout_centerHorizontal="true"
-                android:text="@string/sign_out"
-                android:textColor="@color/menuItemForeground" />
-        </RelativeLayout>
-    </RelativeLayout>
+            android:fontFamily="@font/inter"
+            android:text="@string/cinema_your_account"
+            android:textColor="@color/lightForeground"
+            android:textSize="12sp" />
+        <TextView
+            android:id="@+id/signed_in_email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:ellipsize="middle"
+            android:fontFamily="@font/inter"
+            android:maxLines="1"
+            android:textColor="@color/darkForeground"
+            android:textSize="14sp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/sign_out_button"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="48dp"
+            android:fontFamily="@font/inter"
+            android:text="@string/sign_out"
+            android:textAllCaps="false"
+            android:textColor="@color/cinemaAccent" />
+    </LinearLayout>
 
     <View
         android:id="@+id/sign_in_header_divider"
-        android:background="@color/lbryGreen"
         android:layout_width="match_parent"
-        android:layout_height="0.5dp" />
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/divider" />
 </LinearLayout>

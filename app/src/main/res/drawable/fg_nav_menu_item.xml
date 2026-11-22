@@ -1,5 +1,5 @@
 <selector
     xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_selected="true" android:color="@color/lbryGreen" />
-    <item android:color="@color/menuItemForeground" />
+    <item android:state_selected="true" android:color="@color/cinemaAccent" />
+    <item android:color="@color/darkForeground" />
 </selector>
