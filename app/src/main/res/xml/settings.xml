@@ -20,7 +20,7 @@
             app:title="@string/theme_mode_title"
             app:entries="@array/theme_mode_labels"
             app:entryValues="@array/theme_mode_values"
-            app:defaultValue="system"
+            app:defaultValue="dark"
             app:useSimpleSummaryProvider="true"
             app:iconSpaceReserved="false" />
         <SwitchPreferenceCompat

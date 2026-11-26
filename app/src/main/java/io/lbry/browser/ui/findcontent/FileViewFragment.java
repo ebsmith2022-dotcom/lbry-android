@@ -1066,6 +1066,32 @@ public class FileViewFragment extends BaseFragment implements
     }
 
     private void initUi(View root) {
+        // The Cinema watch screen uses the player's own navigation instead of a toolbar.
+        View.OnClickListener leaveWatchScreen = view -> {
+            if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).onBackPressed();
+        };
+        root.findViewById(R.id.cinema_b_watch_back_pending).setOnClickListener(leaveWatchScreen);
+        root.findViewById(R.id.cinema_b_watch_back_loading).setOnClickListener(leaveWatchScreen);
+        root.findViewById(R.id.cinema_b_watch_player_back).setOnClickListener(leaveWatchScreen);
+        View mediaFrame = root.findViewById(R.id.file_view_media_container);
+        mediaFrame.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            View pendingBack = root.findViewById(R.id.cinema_b_watch_back_pending);
+            boolean playerVisible = root.findViewById(R.id.file_view_exoplayer_container).getVisibility() == View.VISIBLE;
+            pendingBack.setVisibility(playerVisible ? View.GONE : View.VISIBLE);
+        });
+        mediaFrame.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            int height = Math.round((right - left) * 9f / 16f);
+            if (height > 0 && view.getLayoutParams().height != height) {
+                view.getLayoutParams().height = height;
+                view.requestLayout();
+            }
+        });
+        root.findViewById(R.id.cinema_b_watch_autoplay_options).setOnClickListener(view -> {
+            View details = root.findViewById(R.id.cinema_b_watch_autoplay_details);
+            boolean expanded = details.getVisibility() != View.VISIBLE;
+            details.setVisibility(expanded ? View.VISIBLE : View.GONE);
+            view.setRotation(expanded ? 180f : 0f);
+        });
         buttonPublishSomething.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -2411,6 +2437,7 @@ public class FileViewFragment extends BaseFragment implements
                 loadingPlaceholders.add(placeholder);
             }
             relatedContentAdapter = new ClaimListAdapter(loadingPlaceholders, context);
+            relatedContentAdapter.setCinemaRelated(true);
             RecyclerView relatedContentList = root.findViewById(R.id.file_view_related_content_list);
             relatedContentList.setAdapter(relatedContentAdapter);
 
@@ -3072,8 +3099,7 @@ public class FileViewFragment extends BaseFragment implements
                 Helper.setViewVisibility(root.findViewById(R.id.file_view_action_unpublish), isOwnClaim ? View.VISIBLE : View.GONE);
 
 
-                LinearLayout fileViewActionsArea = root.findViewById(R.id.file_view_actions_area);
-                fileViewActionsArea.setWeightSum(isOwnClaim ? 6 : 5);
+                // Actions are scrollable pills; visibility no longer changes their width.
             }
         }
     }

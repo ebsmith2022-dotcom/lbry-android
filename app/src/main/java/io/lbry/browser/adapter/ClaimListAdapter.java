@@ -34,6 +34,8 @@ import lombok.Setter;
 public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.ViewHolder> {
     private boolean cinemaFeed;
     public void setCinemaFeed(boolean enabled) { cinemaFeed = enabled; }
+    private boolean cinemaRelated;
+    public void setCinemaRelated(boolean enabled) { cinemaRelated = enabled; }
     private static final int VIEW_TYPE_CINEMA = 4;
     private static final int VIEW_TYPE_STREAM = 1;
     private static final int VIEW_TYPE_CHANNEL = 2;
@@ -313,7 +315,7 @@ public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.View
             case VIEW_TYPE_CINEMA: viewResourceId = R.layout.list_item_cinema; break;
             case VIEW_TYPE_FEATURED: viewResourceId = R.layout.list_item_featured_search_result; break;
             case VIEW_TYPE_CHANNEL: viewResourceId = R.layout.list_item_channel; break;
-            case VIEW_TYPE_STREAM: default: viewResourceId = R.layout.list_item_stream; break;
+            case VIEW_TYPE_STREAM: default: viewResourceId = cinemaRelated ? R.layout.cinema_b_watch_related : R.layout.list_item_stream; break;
         }
 
         View v = LayoutInflater.from(context).inflate(viewResourceId, parent, false);
@@ -500,9 +502,13 @@ public class ClaimListAdapter extends RecyclerView.Adapter<ClaimListAdapter.View
                 }
 
                 Helper.setViewText(vh.fileSizeView, claimFile != null && !Helper.isNullOrEmpty(claimFile.getDownloadPath()) ? fileSizeString : null);
-                Helper.setViewVisibility(vh.downloadProgressView, isDownloading ? View.VISIBLE : View.INVISIBLE);
+                Helper.setViewVisibility(vh.downloadProgressView, isDownloading ? View.VISIBLE :
+                        cinemaRelated ? View.GONE : View.INVISIBLE);
                 Helper.setViewProgress(vh.downloadProgressView, progress);
                 Helper.setViewText(vh.deviceView, item.getDevice());
+                if (cinemaRelated) {
+                    Helper.setViewVisibility(vh.deviceView, Helper.isNullOrEmpty(item.getDevice()) ? View.GONE : View.VISIBLE);
+                }
             } else if (Claim.TYPE_CHANNEL.equalsIgnoreCase(item.getValueType())) {
                 if (!Helper.isNullOrEmpty(thumbnailUrl)) {
                     Glide.with(context.getApplicationContext()).

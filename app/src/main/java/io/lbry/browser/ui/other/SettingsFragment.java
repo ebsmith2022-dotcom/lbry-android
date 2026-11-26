@@ -84,7 +84,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Shared
 
     public void onSharedPreferenceChanged(SharedPreferences sp, String key) {
         if (ThemeMode.KEY.equals(key)) {
-            AppCompatDelegate.setDefaultNightMode(ThemeMode.nightMode(sp.getString(ThemeMode.KEY, "system")));
+            AppCompatDelegate.setDefaultNightMode(ThemeMode.nightMode(sp.getString(ThemeMode.KEY, "dark")));
         } else if (key.equalsIgnoreCase(MainActivity.PREFERENCE_KEY_PARTICIPATE_DATA_NETWORK)) {
             boolean dhtEnabled = sp.getBoolean(MainActivity.PREFERENCE_KEY_PARTICIPATE_DATA_NETWORK, false);
             updateDHTFileSetting(dhtEnabled);

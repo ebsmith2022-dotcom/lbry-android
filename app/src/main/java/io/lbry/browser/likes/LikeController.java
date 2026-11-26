@@ -40,15 +40,19 @@ public final class LikeController {
    if(token==null && claim!=null)try{token=videoToken(claim);}catch(Exception error){failed();return;}
    request(loaded ? !liked : null);
   });
+  button.setOnLongClickListener(v -> {
+   android.widget.Toast.makeText(v.getContext(), R.string.community_likes_scope, android.widget.Toast.LENGTH_LONG).show();
+   return true;
+  });
  }
  public void bind(String id) {
   if(id != null) id=id.toLowerCase(java.util.Locale.ROOT);
   if(id != null && !id.matches("[a-f0-9]{40}")) id=null;
   if(java.util.Objects.equals(id,claim)) return;
   cancel();claim=id;loaded=false;liked=false;token=null;
-  container.setVisibility(id == null ? View.GONE : View.VISIBLE);
+  container.setVisibility(id == null ? View.GONE : View.VISIBLE);status.setVisibility(View.GONE);
   if(id == null) return;
-  button.setText(R.string.community_like_loading);button.setEnabled(false);status.setText(R.string.community_likes_scope);
+  button.setText(R.string.community_like_loading);button.setEnabled(false);button.setSelected(false);status.setVisibility(View.GONE);
   try {token=videoToken(id);} catch(Exception error){failed();return;}
   if(running) request(null);
  }
@@ -62,7 +66,7 @@ public final class LikeController {
   return hex(mac.doFinal(id.getBytes(StandardCharsets.UTF_8)));
  }
  private static String hex(byte[] bytes){StringBuilder out=new StringBuilder();for(byte b:bytes)out.append(String.format(java.util.Locale.ROOT,"%02x",b & 255));return out.toString();}
- private void failed(){busy=false;loaded=false;button.setSelected(false);button.setEnabled(true);button.setText(R.string.community_like_retry);status.setText(R.string.community_likes_error);}
+ private void failed(){busy=false;loaded=false;button.setSelected(false);button.setEnabled(true);button.setText(R.string.community_like_retry);status.setText(R.string.community_likes_error);status.setVisibility(View.VISIBLE);}
  private void request(Boolean desired) {
   if(!running || claim==null || token==null || busy)return;
   HttpUrl base=HttpUrl.parse(BuildConfig.SPONSOR_BASE_URL);
@@ -80,9 +84,9 @@ public final class LikeController {
      if(count<0 || (selected && count<1))throw new IOException("Invalid count");
      main.post(()->{if(!running || generation!=ticket)return;busy=false;loaded=true;liked=selected;
       button.setEnabled(true);button.setSelected(selected);
-      button.setText(button.getContext().getString(selected?R.string.community_liked_count:R.string.community_like_count,java.text.NumberFormat.getIntegerInstance().format(count)));
+      button.setText(button.getContext().getString(selected?R.string.cinema_b_watch_liked:R.string.cinema_b_watch_like,java.text.NumberFormat.getIntegerInstance().format(count)));
       button.setContentDescription(button.getContext().getString(selected?R.string.community_unlike_accessibility:R.string.community_like_accessibility,count));
-      status.setText(R.string.community_likes_scope);main.postDelayed(refresh,60_000);
+      status.setVisibility(View.GONE);main.postDelayed(refresh,60_000);
      });
     }catch(Exception e){main.post(()->{if(running && generation==ticket)failed();});}
    }

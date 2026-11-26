@@ -2,13 +2,13 @@
 <resources>
     <color name="colorPrimary">#40B887</color>
     <color name="colorPrimaryDark">#2F9176</color>
-    <color name="colorAccent">#38D9A9</color>
+    <color name="colorAccent">#00D6AE</color>
 
-    <color name="pageBackground">#101416</color>
-    <color name="actionBarBackground">#181E22</color>
-    <color name="statusBarColor">#181E22</color>
-    <color name="actionBarForeground">#F3F6F7</color>
-    <color name="drawerBackground">#181E22</color>
+    <color name="pageBackground">#101315</color>
+    <color name="actionBarBackground">#101315</color>
+    <color name="statusBarColor">#101315</color>
+    <color name="actionBarForeground">#F5F6F7</color>
+    <color name="drawerBackground">#101315</color>
     <color name="menuItemForeground">#C1CAD0</color>
     <color name="selectedNavItem">#253B3B</color>
     <color name="channelCoverBackground">#CC000000</color>
@@ -21,22 +21,22 @@
     <color name="bufferedColor">@color/nextLbryGreenSemiTransparent</color>
 
     <!-- At some point, these colours have to be renamed -->
-    <color name="darkForeground">#F3F6F7</color>
-    <color name="lightForeground">#AAB5BD</color>
+    <color name="darkForeground">#F5F6F7</color>
+    <color name="lightForeground">#ABB2B7</color>
     <color name="foreground">#C1CAD0</color>
     <color name="mediaContainerBackground">#333333</color>
     <color name="borderTextArea">#5F5F5F</color>
-    <color name="backgroundTextArea">#20292E</color>
+    <color name="backgroundTextArea">#25292C</color>
 
     <color name="brighterLbryGreen">#40B887</color>
     <color name="lbryGreen">#2F9176</color>
-    <color name="nextLbryGreen">#38D9A9</color>
-    <color name="nextLbryGreenSemiTransparent">#3338D9A9</color>
+    <color name="nextLbryGreen">#00D6AE</color>
+    <color name="nextLbryGreenSemiTransparent">#3300D6AE</color>
     <color name="tagGreen">#329A7E</color>
     <color name="tagGrape">#77D510B8</color>
 
-    <color name="divider">#344047</color>
-    <color name="lightDivider">#252E33</color>
+    <color name="divider">#343A3D</color>
+    <color name="lightDivider">#25292C</color>
 
     <color name="lightGrey">#CCCCCC</color>
     <color name="actionGrey">#AAAAAA</color>
@@ -61,5 +61,5 @@
 
     <color name="codeTagText">#E8B692</color>
     <color name="codeTagBackground">#464B50</color>
-    <color name="cinemaAccent">#56DCC6</color>
+    <color name="cinemaAccent">#00D6AE</color>
 </resources>

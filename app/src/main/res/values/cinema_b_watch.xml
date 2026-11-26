@@ -1,0 +1,10 @@
+<resources>
+    <string name="cinema_b_watch_back" translatable="false">Back</string>
+    <string name="cinema_b_watch_notifications" translatable="false">Creator notifications</string>
+    <string name="cinema_b_watch_unfollow" translatable="false">Unfollow creator</string>
+    <string name="cinema_b_watch_autoplay" translatable="false">Autoplay</string>
+    <string name="cinema_b_watch_autoplay_options" translatable="false">Autoplay options</string>
+    <string name="cinema_b_watch_like" translatable="false">Like %1$s</string>
+    <string name="cinema_b_watch_liked" translatable="false">Liked %1$s</string>
+    <string name="cinema_b_watch_time_separator" translatable="false">/</string>
+</resources>

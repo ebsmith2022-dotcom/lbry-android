@@ -7,7 +7,15 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
         <item name="windowActionModeOverlay">true</item>
-        <item name="android:windowBackground">@color/colorPrimaryDark</item>
+        <item name="android:windowBackground">@color/pageBackground</item>
+        <item name="android:colorBackground">@color/pageBackground</item>
+        <item name="android:textColorPrimary">@color/darkForeground</item>
+        <item name="android:textColorSecondary">@color/lightForeground</item>
+        <item name="colorSurface">@color/actionBarBackground</item>
+        <item name="colorOnSurface">@color/darkForeground</item>
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="android:statusBarColor">@color/statusBarColor</item>
+        <item name="android:navigationBarColor">@color/actionBarBackground</item>
         <item name="drawerArrowStyle">@style/AppTheme.DrawerArrowStyle</item>
         <!--item name="android:windowLightStatusBar">true</item-->
     </style>
@@ -32,4 +40,8 @@
         <item name="color">@color/actionBarForeground</item>
     </style>
 
+    <style name="CinemaNavigationText" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="android:textSize">10sp</item>
+    </style>
 </resources>

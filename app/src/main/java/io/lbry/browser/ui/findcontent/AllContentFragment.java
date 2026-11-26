@@ -4,15 +4,21 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.graphics.drawable.InsetDrawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Gravity;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.google.android.material.snackbar.Snackbar;
 
@@ -21,12 +27,15 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.lbry.browser.MainActivity;
 import io.lbry.browser.R;
-import io.lbry.browser.adapter.ClaimListAdapter;
+import io.lbry.browser.adapter.CinemaHomeAdapter;
+import io.lbry.browser.data.DatabaseHelper;
 import io.lbry.browser.dialog.ContentFromDialogFragment;
 import io.lbry.browser.dialog.ContentScopeDialogFragment;
 import io.lbry.browser.dialog.ContentSortDialogFragment;
@@ -35,14 +44,23 @@ import io.lbry.browser.listener.DownloadActionListener;
 import io.lbry.browser.listener.TagListener;
 import io.lbry.browser.model.Claim;
 import io.lbry.browser.model.LbryFile;
+import io.lbry.browser.model.NavMenuItem;
 import io.lbry.browser.model.Tag;
+import io.lbry.browser.model.ViewHistory;
+import io.lbry.browser.model.lbryinc.Subscription;
+import io.lbry.browser.tasks.claim.ClaimListResultHandler;
+import io.lbry.browser.tasks.claim.ResolveTask;
+import io.lbry.browser.tasks.localdata.FetchViewHistoryTask;
 import io.lbry.browser.tasks.claim.ClaimSearchResultHandler;
 import io.lbry.browser.tasks.claim.ClaimSearchTask;
 import io.lbry.browser.tasks.FollowUnfollowTagTask;
 import io.lbry.browser.ui.BaseFragment;
+import io.lbry.browser.ui.library.LibraryFragment;
 import io.lbry.browser.utils.Helper;
 import io.lbry.browser.utils.Lbry;
 import io.lbry.browser.utils.LbryAnalytics;
+import io.lbry.browser.utils.LbryUri;
+import io.lbry.browser.utils.Lbryio;
 import io.lbry.browser.utils.Predefined;
 import lombok.Getter;
 
@@ -73,11 +91,20 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
     private View contentLoading;
     private View bigContentLoading;
     private View noContentView;
-    private ClaimListAdapter contentListAdapter;
+    private CinemaHomeAdapter contentListAdapter;
     private boolean contentClaimSearchLoading;
     private boolean contentHasReachedEnd;
+    private boolean contentHasLoadedPage;
     private int currentClaimSearchPage;
     private ClaimSearchTask contentClaimSearchTask;
+    private SwipeRefreshLayout refreshLayout;
+    private LinearLayout topicContainer;
+    private String selectedTopic;
+    private int requestGeneration;
+    private int shelfGeneration;
+    private FetchViewHistoryTask historyTask;
+    private ResolveTask historyResolveTask;
+    private ClaimSearchTask followingTask;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -86,6 +113,10 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
         // All content page is sorted by trending by default, past week if sort is top
         currentSortBy = ContentSortDialogFragment.ITEM_SORT_BY_TRENDING;
         currentContentFrom = ContentFromDialogFragment.ITEM_FROM_PAST_WEEK;
+        currentContentScope = ContentScopeDialogFragment.ITEM_EVERYONE;
+        currentClaimSearchPage = 1;
+        contentHasLoadedPage = false;
+        contentHasReachedEnd = false;
 
         layoutFilterContainer = root.findViewById(R.id.all_content_filter_container);
         titleView = root.findViewById(R.id.all_content_page_title);
@@ -103,14 +134,27 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
         bigContentLoading = root.findViewById(R.id.all_content_main_progress);
         contentLoading = root.findViewById(R.id.all_content_load_progress);
         noContentView = root.findViewById(R.id.all_content_no_claim_search_content);
+        noContentView.setOnClickListener(v -> fetchClaimSearchContent(true));
+        refreshLayout = root.findViewById(R.id.cinema_b_home_refresh);
+        refreshLayout.setColorSchemeColors(ContextCompat.getColor(requireContext(), R.color.cinemaAccent));
+        refreshLayout.setProgressBackgroundColorSchemeColor(ContextCompat.getColor(requireContext(), R.color.actionBarBackground));
+        refreshLayout.setOnRefreshListener(() -> {
+            fetchClaimSearchContent(true);
+            loadPersonalShelves();
+        });
+        topicContainer = root.findViewById(R.id.cinema_b_home_topics);
+        buildTopicChips();
 
         contentList = root.findViewById(R.id.all_content_list);
         LinearLayoutManager llm = new LinearLayoutManager(getContext());
         contentList.setLayoutManager(llm);
+        contentListAdapter = new CinemaHomeAdapter(requireContext(), this::openClaim,
+                () -> openHomeDestination(false), () -> openHomeDestination(true), this::loadNextPage);
+        contentList.setAdapter(contentListAdapter);
         contentList.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
-                if (contentClaimSearchLoading) {
+                if (contentClaimSearchLoading || dy <= 0 || contentListAdapter == null || contentListAdapter.getContentCount() == 0) {
                     return;
                 }
 
@@ -120,11 +164,7 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
                     int totalItemCount = lm.getItemCount();
                     int pastVisibleItems = lm.findFirstVisibleItemPosition();
                     if (pastVisibleItems + visibleItemCount >= totalItemCount) {
-                        if (!contentHasReachedEnd) {
-                            // load more
-                            currentClaimSearchPage++;
-                            fetchClaimSearchContent();
-                        }
+                        loadNextPage();
                     }
                 }
             }
@@ -197,6 +237,88 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
         return root;
     }
 
+    private void loadNextPage() {
+        RecyclerView list = contentList;
+        if (list == null) return;
+        // Pagination can be requested from a scroll/layout callback; update the footer afterwards.
+        list.post(() -> {
+            if (contentList == list && !contentClaimSearchLoading && contentHasLoadedPage && !contentHasReachedEnd) {
+                currentClaimSearchPage++;
+                fetchClaimSearchContent();
+            }
+        });
+    }
+
+    private void openClaim(Claim claim) {
+        Context context = getContext();
+        if (!(context instanceof MainActivity) || claim == null) return;
+        MainActivity activity = (MainActivity) context;
+        if (Claim.TYPE_CHANNEL.equalsIgnoreCase(claim.getValueType())) activity.openChannelClaim(claim);
+        else activity.openFileClaim(claim);
+    }
+
+    private void openHomeDestination(boolean following) {
+        Context context = getContext();
+        if (context instanceof MainActivity) {
+            ((MainActivity) context).openFragment(following ? FollowingFragment.class : LibraryFragment.class,
+                    true, following ? NavMenuItem.ID_ITEM_FOLLOWING : NavMenuItem.ID_ITEM_LIBRARY,
+                    following ? null : Collections.singletonMap("filter", "history"));
+        }
+    }
+
+    private void buildTopicChips() {
+        topicContainer.removeAllViews();
+        int[] labels = {R.string.cinema_b_home_all, R.string.cinema_b_home_technology,
+                R.string.cinema_b_home_travel, R.string.cinema_b_home_science, R.string.cinema_b_home_creative,
+                R.string.cinema_b_home_filters};
+        String[] topics = {null, "technology", "travel", "science", "art"};
+        float density = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < labels.length; i++) {
+            final int index = i;
+            TextView chip = new TextView(requireContext());
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Math.round(48 * density));
+            lp.setMarginEnd(Math.round(8 * density));
+            chip.setLayoutParams(lp);
+            chip.setGravity(Gravity.CENTER);
+            chip.setText(labels[i]);
+            chip.setTextSize(12);
+            chip.setTypeface(ResourcesCompat.getFont(requireContext(), R.font.inter));
+            chip.setMinWidth(Math.round(48 * density));
+            chip.setBackground(new InsetDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.cinema_b_home_chip),
+                    0, Math.round(6 * density), 0, Math.round(6 * density)));
+            chip.setPadding(Math.round(14 * density), 0, Math.round(14 * density), 0);
+            chip.setFocusable(true);
+            chip.setOnClickListener(v -> {
+                if (index == labels.length - 1) {
+                    layoutFilterContainer.setVisibility(layoutFilterContainer.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+                    return;
+                }
+                selectedTopic = topics[index];
+                currentContentScope = ContentScopeDialogFragment.ITEM_EVERYONE;
+                updateContentScopeLinkText();
+                Helper.setViewVisibility(customizeLink, View.GONE);
+                updateTopicChips();
+                contentListAdapter.setShowPersonalShelves(!singleTagView && selectedTopic == null);
+                contentList.scrollToPosition(0);
+                fetchClaimSearchContent(true);
+            });
+            chip.setTag(i < topics.length ? topics[i] : "filters");
+            topicContainer.addView(chip);
+        }
+        updateTopicChips();
+    }
+
+    private void updateTopicChips() {
+        for (int i = 0; i < topicContainer.getChildCount(); i++) {
+            TextView chip = (TextView) topicContainer.getChildAt(i);
+            boolean selected = selectedTopic == null ? i == 0 : selectedTopic.equals(chip.getTag());
+            chip.setSelected(selected);
+            chip.setTextColor(ContextCompat.getColor(requireContext(), selected ?
+                    R.color.pageBackground : R.color.darkForeground));
+        }
+    }
+
     public void setParams(Map<String, Object> params) {
         super.setParams(params);
         if (getView() != null) {
@@ -205,6 +327,7 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
     }
 
     private void checkParams(boolean reload) {
+        boolean wasSingleTagView = singleTagView;
         Map<String, Object> params = getParams();
         if (params != null && params.containsKey("singleTag")) {
             String tagName = "";
@@ -218,14 +341,17 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
             Helper.setViewVisibility(customizeLink, View.GONE);
         } else {
             singleTagView = false;
-            // default to followed Tags scope if any tags are followed
             tags = Helper.getTagsForTagObjects(Lbry.followedTags);
-            if (tags.size() > 0) {
-                currentContentScope = ContentScopeDialogFragment.ITEM_TAGS;
-                Helper.setViewVisibility(customizeLink, View.VISIBLE);
-            }
             titleView.setText(getString(R.string.all_content));
         }
+
+        titleView.setVisibility(singleTagView ? View.VISIBLE : View.GONE);
+        if (singleTagView) layoutFilterContainer.setVisibility(View.VISIBLE);
+        else if (wasSingleTagView) layoutFilterContainer.setVisibility(View.GONE);
+        if (topicContainer != null) {
+            ((View) topicContainer.getParent()).setVisibility(singleTagView ? View.GONE : View.VISIBLE);
+        }
+        if (contentListAdapter != null) contentListAdapter.setShowPersonalShelves(!singleTagView && selectedTopic == null);
 
         Helper.setViewVisibility(forPrefix, singleTagView ? View.GONE : View.VISIBLE);
         Helper.setViewVisibility(scopeLink, singleTagView ? View.GONE : View.VISIBLE);
@@ -246,6 +372,9 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
 
     private void onContentScopeChanged(int contentScope) {
         currentContentScope = contentScope;
+        selectedTopic = null;
+        updateTopicChips();
+        contentListAdapter.setShowPersonalShelves(!singleTagView);
 
         // rebuild options and search
         updateContentScopeLinkText();
@@ -390,15 +519,16 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
         updateContentFromLinkText();
         updateContentScopeLinkText();
         updateSortByLinkText();
-        fetchClaimSearchContent();
+        if (contentListAdapter == null || contentListAdapter.getContentCount() == 0) fetchClaimSearchContent();
+        loadPersonalShelves();
     }
 
     public void onPause() {
         Context context = getContext();
         if (context != null) {
-            ((MainActivity) context).removeDownloadActionListener(this);
+            if (context instanceof MainActivity) ((MainActivity) context).removeDownloadActionListener(this);
+            PreferenceManager.getDefaultSharedPreferences(context).unregisterOnSharedPreferenceChangeListener(this);
         }
-        PreferenceManager.getDefaultSharedPreferences(context).unregisterOnSharedPreferenceChangeListener(this);
         super.onPause();
     }
 
@@ -411,8 +541,9 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
         }
 
         return Lbry.buildClaimSearchOptions(
-                (List) null,
-                (currentContentScope == ContentScopeDialogFragment.ITEM_EVERYONE) ? null : tags,
+                Arrays.asList(Claim.TYPE_STREAM, Claim.TYPE_REPOST),
+                singleTagView ? tags : selectedTopic != null ? Collections.singletonList(selectedTopic) :
+                        (currentContentScope == ContentScopeDialogFragment.ITEM_EVERYONE) ? null : tags,
                 canShowMatureContent ? null : new ArrayList<>(Predefined.MATURE_TAGS),
                 null,
                 null,
@@ -433,7 +564,7 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
     }
 
     private View getLoadingView() {
-        return (contentListAdapter == null || contentListAdapter.getItemCount() == 0) ? bigContentLoading : contentLoading;
+        return (contentListAdapter == null || contentListAdapter.getContentCount() == 0) ? bigContentLoading : contentLoading;
     }
 
     private void fetchClaimSearchContent() {
@@ -441,56 +572,48 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
     }
 
     public void fetchClaimSearchContent(boolean reset) {
-        if (reset && contentListAdapter != null) {
+        if (getContext() == null || contentListAdapter == null) return;
+        if (reset) {
+            if (contentClaimSearchTask != null) contentClaimSearchTask.cancel(true);
             contentListAdapter.clearItems();
             currentClaimSearchPage = 1;
+            contentHasReachedEnd = false;
+            contentHasLoadedPage = false;
+        } else if (contentClaimSearchLoading) {
+            return;
         }
 
+        final int generation = ++requestGeneration;
         contentClaimSearchLoading = true;
+        contentListAdapter.setLoadMoreVisible(false);
+        Helper.setViewVisibility(bigContentLoading, View.GONE);
+        Helper.setViewVisibility(contentLoading, View.GONE);
         Helper.setViewVisibility(noContentView, View.GONE);
         Map<String, Object> claimSearchOptions = buildContentOptions();
         contentClaimSearchTask = new ClaimSearchTask(claimSearchOptions, Lbry.LBRY_TV_CONNECTION_STRING, getLoadingView(), new ClaimSearchResultHandler() {
             @Override
             public void onSuccess(List<Claim> claims, boolean hasReachedEnd) {
+                if (generation != requestGeneration || getView() == null || contentListAdapter == null) return;
                 claims = Helper.filterClaimsByOutpoint(claims);
-
-                if (contentListAdapter == null) {
-                    Context context = getContext();
-                    if (context != null) {
-                        contentListAdapter = new ClaimListAdapter(claims, context);
-                        contentListAdapter.setCinemaFeed(true);
-                        contentListAdapter.setListener(new ClaimListAdapter.ClaimListItemListener() {
-                            @Override
-                            public void onClaimClicked(Claim claim) {
-                                Context context = getContext();
-                                if (context instanceof MainActivity) {
-                                    MainActivity activity = (MainActivity) context;
-                                    if (claim.getName().startsWith("@")) {
-                                        // channel claim
-                                        activity.openChannelClaim(claim);
-                                    } else {
-                                        activity.openFileClaim(claim);
-                                    }
-                                }
-                            }
-                        });
-                    }
-                } else {
-                    contentListAdapter.addItems(claims);
-                }
-
-                if (contentList != null && contentList.getAdapter() == null) {
-                    contentList.setAdapter(contentListAdapter);
-                }
+                contentListAdapter.addItems(claims);
 
                 contentHasReachedEnd = hasReachedEnd;
+                contentHasLoadedPage = true;
                 contentClaimSearchLoading = false;
+                contentListAdapter.setLoadMoreVisible(!hasReachedEnd);
+                refreshLayout.setRefreshing(false);
+                ((TextView) noContentView).setText(R.string.no_claim_search_content);
                 checkNoContent();
             }
 
             @Override
             public void onError(Exception error) {
+                if (generation != requestGeneration || getView() == null || contentListAdapter == null) return;
                 contentClaimSearchLoading = false;
+                currentClaimSearchPage = Math.max(1, currentClaimSearchPage - 1);
+                contentListAdapter.setLoadMoreVisible(contentHasLoadedPage && !contentHasReachedEnd);
+                refreshLayout.setRefreshing(false);
+                ((TextView) noContentView).setText(R.string.cinema_b_home_retry);
                 checkNoContent();
             }
         });
@@ -498,14 +621,112 @@ public class AllContentFragment extends BaseFragment implements DownloadActionLi
     }
 
     private void checkNoContent() {
-        boolean noContent = contentListAdapter == null || contentListAdapter.getItemCount() == 0;
+        boolean noContent = contentListAdapter == null || contentListAdapter.getDisplayContentCount() == 0;
         Helper.setViewVisibility(noContentView, noContent ? View.VISIBLE : View.GONE);
     }
 
     public void onSharedPreferenceChanged(SharedPreferences sp, String key) {
-        if (key.equalsIgnoreCase(MainActivity.PREFERENCE_KEY_SHOW_MATURE_CONTENT)) {
+        if (MainActivity.PREFERENCE_KEY_SHOW_MATURE_CONTENT.equalsIgnoreCase(key)) {
             fetchClaimSearchContent(true);
+            loadPersonalShelves();
         }
+    }
+
+    private void loadPersonalShelves() {
+        if (getContext() == null || contentListAdapter == null) return;
+        final int generation = ++shelfGeneration;
+        if (historyTask != null) historyTask.cancel(true);
+        if (historyResolveTask != null) historyResolveTask.cancel(true);
+        if (followingTask != null) followingTask.cancel(true);
+        contentListAdapter.setContinueWatching(Collections.emptyList());
+        contentListAdapter.setFollowing(Collections.emptyList());
+        final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(requireContext());
+        final boolean mature = preferences.getBoolean(MainActivity.PREFERENCE_KEY_SHOW_MATURE_CONTENT, false);
+        DatabaseHelper database = DatabaseHelper.getInstance();
+        if (database != null) {
+            historyTask = new FetchViewHistoryTask(null, 24, database, (history, reachedEnd) -> {
+                if (!isShelfCurrent(generation) || history.isEmpty()) return;
+                List<String> urls = new ArrayList<>();
+                List<String> recentIds = new ArrayList<>();
+                for (ViewHistory item : history) {
+                    if (item.getUri() != null && !recentIds.contains(item.getClaimId())) {
+                        urls.add(item.getUri().toString());
+                        recentIds.add(item.getClaimId());
+                    }
+                }
+                if (urls.isEmpty()) return;
+                historyResolveTask = new ResolveTask(urls, Lbry.LBRY_TV_CONNECTION_STRING, null, new ClaimListResultHandler() {
+                    @Override public void onSuccess(List<Claim> claims) {
+                        if (!isShelfCurrent(generation)) return;
+                        Map<String, Claim> resolved = new LinkedHashMap<>();
+                        for (Claim claim : Helper.filterClaimsByOutpoint(claims)) {
+                            long position = CinemaHomeAdapter.playbackPosition(preferences, claim);
+                            long duration = claim.getDuration() * 1000L;
+                            if (claim.isPlayable() && (mature || !claim.isMature()) &&
+                                    position > 0 && duration > 0 && position < duration * .95) {
+                                resolved.put(claim.getClaimId(), claim);
+                            }
+                        }
+                        List<Claim> ordered = new ArrayList<>();
+                        for (String id : recentIds) if (resolved.containsKey(id)) ordered.add(resolved.get(id));
+                        contentListAdapter.setContinueWatching(ordered);
+                        if (!contentClaimSearchLoading) checkNoContent();
+                    }
+                    @Override public void onError(Exception error) { /* Optional shelf; keep the main feed available. */ }
+                });
+                historyResolveTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            });
+            historyTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+        List<String> channelIds = new ArrayList<>();
+        if (Lbryio.subscriptions != null) {
+            for (Subscription subscription : new ArrayList<>(Lbryio.subscriptions)) {
+                LbryUri uri = LbryUri.tryParse(subscription.getUrl());
+                if (uri != null && !Helper.isNullOrEmpty(uri.getClaimId()) && !channelIds.contains(uri.getClaimId())) {
+                    channelIds.add(uri.getClaimId());
+                }
+            }
+        }
+        if (!channelIds.isEmpty()) {
+            Map<String, Object> options = Lbry.buildClaimSearchOptions(
+                    Arrays.asList(Claim.TYPE_STREAM, Claim.TYPE_REPOST), null,
+                    mature ? null : new ArrayList<>(Predefined.MATURE_TAGS), channelIds, null,
+                    Collections.singletonList(Claim.ORDER_BY_RELEASE_TIME), null, 0, 0, 1, 12, true);
+            followingTask = new ClaimSearchTask(options, Lbry.LBRY_TV_CONNECTION_STRING, null, new ClaimSearchResultHandler() {
+                @Override public void onSuccess(List<Claim> claims, boolean reachedEnd) {
+                    if (!isShelfCurrent(generation)) return;
+                    List<Claim> safe = new ArrayList<>();
+                    for (Claim claim : Helper.filterClaimsByOutpoint(claims)) {
+                        Claim actual = Claim.TYPE_REPOST.equalsIgnoreCase(claim.getValueType()) && claim.getRepostedClaim() != null ? claim.getRepostedClaim() : claim;
+                        if (mature || !actual.isMature()) safe.add(claim);
+                    }
+                    contentListAdapter.setFollowing(safe);
+                    if (!contentClaimSearchLoading) checkNoContent();
+                }
+                @Override public void onError(Exception error) { /* A failed optional shelf must not block browsing. */ }
+            });
+            followingTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        }
+    }
+
+    private boolean isShelfCurrent(int generation) {
+        return generation == shelfGeneration && getView() != null && contentListAdapter != null;
+    }
+
+    @Override public void onDestroyView() {
+        ++requestGeneration;
+        ++shelfGeneration;
+        if (contentClaimSearchTask != null) contentClaimSearchTask.cancel(true);
+        if (historyTask != null) historyTask.cancel(true);
+        if (historyResolveTask != null) historyResolveTask.cancel(true);
+        if (followingTask != null) followingTask.cancel(true);
+        contentClaimSearchLoading = false;
+        if (contentList != null) contentList.setAdapter(null);
+        contentListAdapter = null;
+        contentList = null;
+        topicContainer = null;
+        refreshLayout = null;
+        super.onDestroyView();
     }
 
     public void onDownloadAction(String downloadAction, String uri, String outpoint, String fileInfoJson, double progress) {

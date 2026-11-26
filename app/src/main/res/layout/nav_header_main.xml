@@ -43,6 +43,16 @@
             app:tint="@color/lightForeground" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/cinema_notifications_entry"
+        android:layout_width="match_parent" android:layout_height="48dp"
+        android:layout_marginTop="8dp" android:paddingStart="12dp" android:paddingEnd="12dp"
+        android:gravity="center_vertical" android:fontFamily="@font/inter"
+        android:text="@string/notifications" android:textSize="14sp"
+        android:textColor="@color/darkForeground" android:drawableStart="@drawable/ic_notifications"
+        android:drawableTint="@color/cinemaAccent" android:drawablePadding="12dp"
+        android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true" />
+
     <LinearLayout
         android:id="@+id/sign_in_button_container"
         android:layout_width="match_parent"

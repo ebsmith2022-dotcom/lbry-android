@@ -18,7 +18,7 @@ public final class ThemeMode {
     public static String resolve(String selected, Boolean legacyDark) {
         if ("light".equals(selected) || "dark".equals(selected) || "system".equals(selected)) return selected;
         if (selected == null && legacyDark != null) return legacyDark ? "dark" : "light";
-        return "system";
+        return selected == null ? "dark" : "system";
     }
 
     public static int nightMode(String selected) {

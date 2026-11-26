@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="cinema_b_home_all" tools:ignore="MissingTranslation">All</string>
+    <string name="cinema_b_home_technology" tools:ignore="MissingTranslation">Technology</string>
+    <string name="cinema_b_home_travel" tools:ignore="MissingTranslation">Travel</string>
+    <string name="cinema_b_home_science" tools:ignore="MissingTranslation">Science</string>
+    <string name="cinema_b_home_creative" tools:ignore="MissingTranslation">Creative</string>
+    <string name="cinema_b_home_filters" tools:ignore="MissingTranslation">Filters</string>
+    <string name="cinema_b_home_continue" tools:ignore="MissingTranslation">Continue watching</string>
+    <string name="cinema_b_home_following" tools:ignore="MissingTranslation">From creators you follow</string>
+    <string name="cinema_b_home_explore" tools:ignore="MissingTranslation">More to explore</string>
+    <string name="cinema_b_home_explore_shelf" tools:ignore="MissingTranslation">Explore</string>
+    <string name="cinema_b_home_discover_shelf" tools:ignore="MissingTranslation">More from LBRY</string>
+    <string name="cinema_b_home_retry" tools:ignore="MissingTranslation">Couldn’t load videos. Pull down to try again.</string>
+    <string name="cinema_b_home_paid" tools:ignore="MissingTranslation">Paid</string>
+    <string name="cinema_b_home_load_more" tools:ignore="MissingTranslation">Load more videos</string>
+    <string name="cinema_b_home_open_history" tools:ignore="MissingTranslation">Open your library</string>
+    <string name="cinema_b_home_open_following" tools:ignore="MissingTranslation">Open following</string>
+</resources>

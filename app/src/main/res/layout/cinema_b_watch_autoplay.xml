@@ -1,0 +1,24 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"
+    android:paddingStart="16dp" android:paddingEnd="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+            android:fontFamily="@font/inter" android:text="@string/autoplay_up_next" android:textSize="17sp"
+            android:textStyle="bold" android:textColor="@color/darkForeground" />
+        <androidx.appcompat.widget.SwitchCompat android:id="@+id/autoplay_next_switch"
+            android:layout_width="wrap_content" android:layout_height="48dp" android:minHeight="48dp"
+            android:fontFamily="@font/inter" android:textSize="12sp" android:textColor="@color/lightForeground"
+            android:text="@string/cinema_b_watch_autoplay" />
+        <ImageButton android:id="@+id/cinema_b_watch_autoplay_options" android:layout_width="48dp" android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless" android:padding="8dp" android:src="@drawable/ic_arrow_dropdown"
+            app:tint="@color/lightForeground" android:contentDescription="@string/cinema_b_watch_autoplay_options" />
+    </LinearLayout>
+    <LinearLayout android:id="@+id/cinema_b_watch_autoplay_details" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="vertical" android:paddingBottom="8dp" android:visibility="gone">
+        <TextView android:id="@+id/autoplay_next_mode" android:layout_width="match_parent" android:layout_height="48dp"
+            android:gravity="center_vertical" android:clickable="true" android:focusable="true"
+            android:background="?attr/selectableItemBackground" android:text="@string/autoplay_random" android:textColor="@color/cinemaAccent" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textSize="12sp" android:textColor="@color/lightForeground" android:text="@string/autoplay_minimum_views" />
+    </LinearLayout>
+</LinearLayout>

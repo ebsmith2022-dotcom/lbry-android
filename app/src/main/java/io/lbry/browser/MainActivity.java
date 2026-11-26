@@ -242,6 +242,10 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     @Getter
     private boolean inFullscreenMode;
     private boolean uriBarExpanded;
+    private boolean cinemaKeyboardVisible;
+    private int cinemaStatusInset;
+    private int cinemaBottomInset;
+    private boolean pendingCinemaNotifications;
     private boolean searchKeyboardVisible;
     // make tip unlock a global operation
     @Getter
@@ -434,7 +438,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         SharedPreferences themePreferences = PreferenceManager.getDefaultSharedPreferences(this);
         ThemeMode.migrate(themePreferences);
         AppCompatDelegate.setDefaultNightMode(ThemeMode.nightMode(
-                themePreferences.getString(ThemeMode.KEY, "system")));
+                themePreferences.getString(ThemeMode.KEY, "dark")));
 
         initKeyStore();
         loadAuthToken();
@@ -465,6 +469,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         setContentView(R.layout.activity_main);
         androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.drawer_layout), (view, insets) -> {
             int bottom = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).bottom;
+            cinemaStatusInset = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars()).top;
+            cinemaBottomInset = bottom;
             findViewById(R.id.floating_balance_main_container).setTranslationY(-bottom);
             findViewById(R.id.global_now_playing_card).setTranslationY(0);
             boolean keyboard = insets.isVisible(androidx.core.view.WindowInsetsCompat.Type.ime());
@@ -475,11 +481,20 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                 }
                 searchKeyboardVisible = keyboard;
             }
-            findViewById(R.id.cinema_navigation).setVisibility(keyboard || inFullscreenMode || inPictureInPictureMode ? View.GONE : View.VISIBLE);
+            cinemaKeyboardVisible = keyboard;
+            updateCinemaChrome();
             return insets;
         });
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        if (getSupportActionBar() != null) getSupportActionBar().setDisplayShowTitleEnabled(false);
+        try {
+            androidx.mediarouter.app.MediaRouteButton cast = findViewById(R.id.cinema_header_cast);
+            com.google.android.gms.cast.framework.CastButtonFactory.setUpMediaRouteButton(this, cast);
+            cast.setAlwaysVisible(true);
+        } catch (RuntimeException unavailable) {
+            findViewById(R.id.cinema_header_cast).setVisibility(View.GONE);
+        }
 
         updateMiniPlayerMargins();
 
@@ -551,6 +566,10 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                     openSelectedMenuItem();
                     shouldOpenUserSelectedMenuItem = false;
                 }
+                if (pendingCinemaNotifications) {
+                    pendingCinemaNotifications = false;
+                    showNotifications();
+                }
             }
 
             @Override
@@ -564,6 +583,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         };
         drawer.addDrawerListener(toggle);
         toggle.syncState();
+        toggle.setDrawerIndicatorEnabled(false);
+        toolbar.setNavigationIcon(null);
         toggle.setToolbarNavigationClickListener((view) -> {
             if (toggle != null && !toggle.isDrawerIndicatorEnabled()) {
                 FragmentManager manager = getSupportFragmentManager();
@@ -586,16 +607,13 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             }
         });
 
-        findViewById(R.id.wunderbar_notifications).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                View container = findViewById(R.id.notifications_container);
-                if (container.getVisibility() != View.VISIBLE) {
-                    showNotifications();
-                } else {
-                    hideNotifications();
-                }
-            }
+        findViewById(R.id.wunderbar_notifications).setOnClickListener(view -> {
+            clearWunderbarFocus(findViewById(R.id.wunderbar));
+            ((DrawerLayout) findViewById(R.id.drawer_layout)).openDrawer(GravityCompat.START);
+        });
+        findViewById(R.id.cinema_notifications_entry).setOnClickListener(view -> {
+            pendingCinemaNotifications = true;
+            closeDrawer();
         });
 
         notificationsSwipeContainer = findViewById(R.id.notifications_list_swipe_container);
@@ -677,7 +695,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
 
     public boolean isDarkMode() {
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        int mode = ThemeMode.nightMode(sp.getString(ThemeMode.KEY, "system"));
+        int mode = ThemeMode.nightMode(sp.getString(ThemeMode.KEY, "dark"));
         if (mode == AppCompatDelegate.MODE_NIGHT_YES) return true;
         if (mode == AppCompatDelegate.MODE_NIGHT_NO) return false;
         return (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK)
@@ -745,6 +763,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     public void setActionBarTitle(int stringResourceId) {
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
+            actionBar.setDisplayShowTitleEnabled(true);
             SpannableString spannable = new SpannableString(getString(stringResourceId));
             spannable.setSpan(new TypefaceSpan("inter"), 0, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
             actionBar.setTitle(spannable);
@@ -889,8 +908,29 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
                         fragment instanceof WalletFragment ? R.id.cinema_wallet :
                         fragment instanceof LibraryFragment ? R.id.cinema_library : 0;
                 if (id != 0) navigation.getMenu().findItem(id).setChecked(true);
+                updateCinemaChrome();
             }
         }, false);
+    }
+
+    /** Keep the watch page edge-to-edge while restoring navigation on other pages. */
+    private void updateCinemaChrome() {
+        boolean watching = getCurrentFragment() instanceof FileViewFragment;
+        boolean immersive = inFullscreenMode || inPictureInPictureMode;
+        // This legacy overlay otherwise covers the Wallet and You navigation buttons on cold launch.
+        findViewById(R.id.floating_balance_main_container).setVisibility(View.GONE);
+        View content = findViewById(R.id.content_main_container);
+        content.setPadding(0, watching && !immersive ? cinemaStatusInset : 0,
+                0, immersive || cinemaKeyboardVisible ? 0 : cinemaBottomInset);
+        View navigation = findViewById(R.id.cinema_navigation);
+        if (navigation != null) navigation.setVisibility(
+                watching || immersive || cinemaKeyboardVisible ? View.GONE : View.VISIBLE);
+        ActionBar bar = getSupportActionBar();
+        if (bar != null) {
+            View splash = findViewById(R.id.splash_view);
+            if (watching || immersive || (splash != null && splash.getVisibility() == View.VISIBLE)) bar.hide();
+            else bar.show();
+        }
     }
 
     private void openSelectedMenuItem() {
@@ -1118,7 +1158,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     private void renderFullMode() {
-        findViewById(R.id.cinema_navigation).setVisibility(inFullscreenMode ? View.GONE : View.VISIBLE);
+        updateCinemaChrome();
         if (!inFullscreenMode) {
             showActionBar();
         } else {
@@ -1389,6 +1429,12 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             searchKeyboardVisible = insets != null && insets.isVisible(WindowInsetsCompat.Type.ime());
         }
         uriBarExpanded = expanded;
+        findViewById(R.id.cinema_wordmark).setVisibility(expanded ? View.GONE : View.VISIBLE);
+        // The route button controls its own availability; hide the whole compact header while typing.
+        View cast = findViewById(R.id.cinema_header_cast);
+        cast.setAlpha(expanded ? 0f : 1f);
+        cast.setEnabled(!expanded);
+        cast.setImportantForAccessibility(expanded ? View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS : View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
         findViewById(R.id.wunderbar_search).setVisibility(expanded ? View.GONE : View.VISIBLE);
         findViewById(R.id.wunderbar_close).setVisibility(expanded ? View.VISIBLE : View.GONE);
         findViewById(R.id.wunderbar_notifications).setVisibility(expanded ? View.INVISIBLE : View.VISIBLE);
@@ -1832,7 +1878,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         }
         unlockDrawer();
         inFullscreenMode = false;
-        findViewById(R.id.cinema_navigation).setVisibility(View.VISIBLE);
+        updateCinemaChrome();
     }
 
     private void initKeyStore() {
@@ -2843,10 +2889,7 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
         }
     }
     public void showActionBar() {
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.show();
-        }
+        updateCinemaChrome();
     }
     private void renderStartupFailed(List<StartupStage> startupStages) {
         ListView listView = findViewById(R.id.startup_stage_error_listview);
@@ -3467,7 +3510,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
             actionBar.setTitle(null);
         }
         if (toggle != null) {
-            toggle.setDrawerIndicatorEnabled(true);
+            toggle.setDrawerIndicatorEnabled(false);
+            ((Toolbar) findViewById(R.id.toolbar)).setNavigationIcon(null);
         }
         unlockDrawer();
         showSearchBar();
@@ -3478,6 +3522,8 @@ public class MainActivity extends AppCompatActivity implements SdkStatusListener
     }
 
     public void showSearchBar() {
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) actionBar.setDisplayShowTitleEnabled(false);
         findViewById(R.id.wunderbar_container).setVisibility(View.VISIBLE);
         clearWunderbarFocus(findViewById(R.id.wunderbar));
     }

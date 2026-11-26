@@ -24,7 +24,10 @@
         android:id="@+id/cinema_navigation"
         android:layout_width="match_parent" android:layout_height="wrap_content"
         android:minHeight="64dp" android:background="@color/actionBarBackground"
-        app:elevation="8dp" app:labelVisibilityMode="labeled"
+        app:elevation="0dp" app:labelVisibilityMode="labeled"
+        app:itemIconSize="24dp"
+        app:itemTextAppearanceActive="@style/CinemaNavigationText"
+        app:itemTextAppearanceInactive="@style/CinemaNavigationText"
         app:itemHorizontalTranslationEnabled="false"
         app:itemIconTint="@color/cinema_navigation" app:itemTextColor="@color/cinema_navigation"
         app:menu="@menu/cinema_navigation" app:layout_constraintBottom_toBottomOf="parent" />

@@ -124,7 +124,8 @@ public class LibraryFragment extends BaseFragment implements
         layoutListEmpty = root.findViewById(R.id.library_empty_container);
         textListEmpty = root.findViewById(R.id.library_list_empty_text);
 
-        currentFilter = FILTER_DOWNLOADS;
+        currentFilter = getParams() != null && "history".equals(getParams().get("filter"))
+                ? FILTER_HISTORY : FILTER_DOWNLOADS;
         linkFilterDownloads.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -226,6 +227,9 @@ public class LibraryFragment extends BaseFragment implements
             if (context instanceof MainActivity) {
                 MainActivity activity = (MainActivity) context;
                 activity.addSdkStatusListener(this);
+            }
+            if (currentFilter == FILTER_HISTORY) {
+                showHistory();
             }
         } else {
             onSdkReady();

@@ -1,0 +1,5 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="#081012" /></shape></item>
+    <item><shape><gradient android:type="radial" android:centerX="0.5" android:centerY="0.4" android:gradientRadius="260dp" android:startColor="#143F3B" android:centerColor="#0B2223" android:endColor="#081012" /></shape></item>
+    <item android:gravity="bottom" android:height="300dp" android:drawable="@drawable/cinema_startup_wave" />
+</layer-list>

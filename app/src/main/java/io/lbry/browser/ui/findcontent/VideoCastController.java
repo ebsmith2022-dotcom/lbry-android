@@ -30,6 +30,7 @@ final class VideoCastController implements SessionManagerListener<CastSession> {
     private final Function<Claim, Uri> resolveStream;
     private SessionManager sessions;
     private MediaRouteButton routeButton;
+    private final View controls;
     private boolean closed;
     private boolean loading;
     private int generation;
@@ -51,17 +52,26 @@ final class VideoCastController implements SessionManagerListener<CastSession> {
         this.activity = activity;
         this.claimSupplier = claimSupplier;
         this.resolveStream = resolveStream;
+        controls = root.findViewById(R.id.video_cast_bar);
+        routeButton = root.findViewById(R.id.video_cast_picker);
         try {
             sessions = CastContext.getSharedInstance(activity).getSessionManager();
-            routeButton = root.findViewById(R.id.video_cast_picker);
             CastButtonFactory.setUpMediaRouteButton(activity, routeButton);
+            routeButton.setAlwaysVisible(true);
             sessions.addSessionManagerListener(this, CastSession.class);
             root.findViewById(R.id.video_cast_play).setOnClickListener(v -> castVideo());
             root.findViewById(R.id.video_cast_here).setOnClickListener(v -> playHere());
+            renderControls();
         } catch (RuntimeException exception) {
             // Devices without Google Play services must retain normal playback.
             root.findViewById(R.id.video_cast_bar).setVisibility(View.GONE);
+            if (routeButton != null) routeButton.setVisibility(View.GONE);
         }
+    }
+
+    private void renderControls() {
+        CastSession session = sessions != null ? sessions.getCurrentCastSession() : null;
+        controls.setVisibility(session != null && session.isConnected() ? View.VISIBLE : View.GONE);
     }
 
     private void message(int resource) {
@@ -169,13 +179,13 @@ final class VideoCastController implements SessionManagerListener<CastSession> {
         if (sessions != null) sessions.removeSessionManagerListener(this, CastSession.class);
     }
 
-    @Override public void onSessionStarted(CastSession session, String id) { castVideo(); }
+    @Override public void onSessionStarted(CastSession session, String id) { renderControls(); castVideo(); }
     @Override public void onSessionStartFailed(CastSession session, int error) { message(R.string.community_cast_failed); }
     @Override public void onSessionResumeFailed(CastSession session, int error) { message(R.string.community_cast_failed); }
-    @Override public void onSessionEnded(CastSession session, int error) { generation++; loading = false; }
+    @Override public void onSessionEnded(CastSession session, int error) { generation++; loading = false; controls.setVisibility(View.GONE); }
     @Override public void onSessionStarting(CastSession session) { }
     @Override public void onSessionEnding(CastSession session) { }
     @Override public void onSessionResuming(CastSession session, String id) { }
-    @Override public void onSessionResumed(CastSession session, boolean suspended) { }
-    @Override public void onSessionSuspended(CastSession session, int reason) { generation++; loading = false; }
+    @Override public void onSessionResumed(CastSession session, boolean suspended) { renderControls(); }
+    @Override public void onSessionSuspended(CastSession session, int reason) { generation++; loading = false; controls.setVisibility(View.GONE); }
 }

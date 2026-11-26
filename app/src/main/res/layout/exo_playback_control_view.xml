@@ -1,34 +1,30 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:background="@color/playerControlsBackground"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
-
     <RelativeLayout
         android:id="@+id/player_skip_back_10"
         android:clickable="true"
         android:focusable="true"
         android:layout_centerVertical="true"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_toStartOf="@id/player_play_pause">
         <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="16dp"
             android:src="@drawable/ic_replay_10"
-            app:tint="@color/white" />
+            app:tint="@color/white"
+            android:layout_centerInParent="true" />
     </RelativeLayout>
-
     <RelativeLayout
         android:id="@+id/player_play_pause"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
         android:layout_centerInParent="true">
         <RelativeLayout
             android:id="@id/exo_play"
@@ -38,12 +34,11 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <ImageView
-                android:layout_width="72dp"
-                android:layout_height="72dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_centerInParent="true"
                 android:src="@drawable/ic_play" />
         </RelativeLayout>
-
         <RelativeLayout
             android:id="@id/exo_pause"
             android:background="?attr/selectableItemBackground"
@@ -52,31 +47,28 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
             <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
                 android:layout_centerInParent="true"
                 android:src="@drawable/ic_pause" />
         </RelativeLayout>
     </RelativeLayout>
-
     <RelativeLayout
         android:id="@+id/player_skip_forward_10"
         android:clickable="true"
         android:focusable="true"
         android:layout_centerVertical="true"
-        android:layout_width="72dp"
-        android:layout_height="72dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:layout_toEndOf="@id/player_play_pause">
         <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="16dp"
             android:src="@drawable/ic_forward_10"
-            app:tint="@color/white" />
+            app:tint="@color/white"
+            android:layout_centerInParent="true" />
     </RelativeLayout>
-
     <RelativeLayout
         android:id="@+id/player_playback_speed"
         android:background="?attr/selectableItemBackground"
@@ -85,7 +77,8 @@
         android:layout_alignParentBottom="true"
         android:layout_width="56dp"
         android:layout_height="48dp"
-        android:layout_toStartOf="@id/player_toggle_fullscreen">
+        android:layout_toStartOf="@id/player_toggle_fullscreen"
+        android:layout_marginBottom="20dp">
         <TextView
             android:id="@+id/player_playback_speed_label"
             android:layout_alignParentEnd="true"
@@ -99,7 +92,6 @@
             android:textColor="@color/white"
             android:textSize="11sp" />
     </RelativeLayout>
-
     <RelativeLayout
         android:id="@+id/player_toggle_fullscreen"
         android:clickable="true"
@@ -108,7 +100,8 @@
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="20dp">
         <ImageView
             android:id="@+id/player_image_full_screen_toggle"
             android:layout_width="24dp"
@@ -117,47 +110,78 @@
             android:src="@drawable/ic_fullscreen"
             app:tint="@color/white" />
     </RelativeLayout>
-
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_alignParentBottom="true"
         android:layout_toStartOf="@id/player_playback_speed"
         android:paddingStart="16dp"
-        android:paddingEnd="4dp">
+        android:paddingEnd="4dp"
+        android:layout_marginBottom="20dp">
         <TextView
             android:id="@+id/player_duration_elapsed"
-            android:layout_width="64dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
             android:fontFamily="@font/inter"
             android:singleLine="true"
             android:text="@string/zero_duration"
             android:textColor="@color/white"
-            android:textSize="14sp" />
-        <com.google.android.exoplayer2.ui.DefaultTimeBar
-            android:id="@id/exo_progress"
-            android:layout_toStartOf="@id/player_duration_total"
-            android:layout_toEndOf="@id/player_duration_elapsed"
-            android:layout_width="match_parent"
-            android:layout_height="24dp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"
-            android:layout_centerVertical="true"
-            app:scrubber_color="@color/scrubberColor"
-            app:played_color="@color/playedColor"
-            app:buffered_color="@color/bufferedColor" />
+            android:textSize="11sp" />
         <TextView
             android:id="@+id/player_duration_total"
-            android:layout_width="64dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
-            android:layout_alignParentEnd="true"
-            android:gravity="end"
             android:fontFamily="@font/inter"
             android:singleLine="true"
             android:text="@string/zero_duration"
             android:textColor="@color/white"
-            android:textSize="14sp" />
+            android:textSize="11sp"
+            android:layout_toEndOf="@id/cinema_b_watch_time_separator"
+            android:layout_marginStart="4dp" />
+        <TextView
+            android:id="@+id/cinema_b_watch_time_separator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toEndOf="@id/player_duration_elapsed"
+            android:layout_marginStart="4dp"
+            android:text="@string/cinema_b_watch_time_separator"
+            android:textSize="11sp"
+            android:textColor="@color/white" />
     </RelativeLayout>
+    <com.google.android.exoplayer2.ui.DefaultTimeBar
+        android:id="@id/exo_progress"
+        android:layout_width="match_parent"
+        android:layout_height="32dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:scrubber_color="@color/scrubberColor"
+        app:played_color="@color/playedColor"
+        app:buffered_color="@color/bufferedColor"
+        app:bar_height="3dp" />
+    <ImageButton
+        android:id="@+id/cinema_b_watch_player_back"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="4dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:background="@drawable/cinema_b_watch_control_background"
+        android:padding="12dp"
+        android:src="@drawable/ic_arrow_left"
+        android:contentDescription="@string/cinema_b_watch_back"
+        app:tint="@color/white" />
+    <androidx.mediarouter.app.MediaRouteButton
+        android:id="@+id/video_cast_picker"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="4dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:contentDescription="@string/community_cast_choose"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark"
+        app:mediaRouteButtonTint="@color/white" />
 </RelativeLayout>

@@ -3,8 +3,8 @@ import org.junit.Test;
 import androidx.appcompat.app.AppCompatDelegate;
 import static org.junit.Assert.*;
 public class ThemeModeTest {
-    @Test public void newInstallFollowsSystemAndExistingChoicesSurvive() {
-        assertEquals("system", ThemeMode.resolve(null, null));
+    @Test public void newInstallUsesCinemaDarkAndExistingChoicesSurvive() {
+        assertEquals("dark", ThemeMode.resolve(null, null));
         assertEquals("dark", ThemeMode.resolve(null, true));
         assertEquals("light", ThemeMode.resolve(null, false));
         assertEquals("system", ThemeMode.resolve("system", true));

@@ -13,7 +13,9 @@
     <com.google.android.material.appbar.AppBarLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:id="@+id/cinema_app_bar"
         android:fitsSystemWindows="true"
+        app:elevation="0dp"
         android:background="@color/actionBarBackground"
         android:theme="@style/AppTheme.AppBarOverlay">
 
@@ -21,6 +23,9 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
+            app:contentInsetStart="12dp"
+            app:contentInsetEnd="4dp"
+            app:contentInsetStartWithNavigation="0dp"
             app:theme="@style/AppTheme.ToolBar"
             app:popupTheme="@style/AppTheme.PopupOverlay">
             <RelativeLayout
@@ -30,6 +35,36 @@
                 android:focusableInTouchMode="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+                <LinearLayout
+                    android:id="@+id/cinema_wordmark"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_toStartOf="@id/cinema_header_cast"
+                    android:layout_centerVertical="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+                    <ImageView
+                        android:layout_width="28dp" android:layout_height="28dp"
+                        android:src="@mipmap/ic_launcher"
+                        android:importantForAccessibility="no" />
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:layout_width="0dp" android:layout_height="match_parent"
+                        android:layout_weight="1" android:layout_marginStart="7dp"
+                        android:gravity="center_vertical"
+                        android:fontFamily="@font/inter" android:textStyle="bold"
+                        android:text="@string/app_name" android:textColor="@color/darkForeground"
+                        android:maxLines="1" android:textSize="17sp"
+                        app:autoSizeTextType="uniform" app:autoSizeMinTextSize="11sp"
+                        app:autoSizeMaxTextSize="17sp" app:autoSizeStepGranularity="1sp" />
+                </LinearLayout>
+                <androidx.mediarouter.app.MediaRouteButton
+                    android:id="@+id/cinema_header_cast"
+                    android:layout_width="44dp" android:layout_height="48dp"
+                    android:layout_toStartOf="@id/wunderbar_search"
+                    android:layout_centerVertical="true"
+                    android:contentDescription="@string/community_cast_choose"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    app:mediaRouteButtonTint="@color/actionBarForeground" />
                 <EditText
                     android:id="@+id/wunderbar"
                     android:visibility="gone"
@@ -78,6 +113,8 @@
 
                 <RelativeLayout
                     android:id="@+id/wunderbar_notifications"
+                    android:contentDescription="@string/cinema_account_menu"
+                    android:focusable="true"
                     android:clickable="true"
                     android:background="?attr/selectableItemBackground"
                     android:layout_width="48dp"
@@ -89,7 +126,7 @@
                         android:layout_width="24dp"
                         android:layout_height="24dp"
                         android:layout_centerInParent="true"
-                        android:src="@drawable/ic_notifications"
+                        android:src="@drawable/cinema_profile"
                         app:tint="@color/actionBarForeground" />
                     <TextView
                         android:id="@+id/notifications_badge_count"
@@ -117,7 +154,7 @@
     <RelativeLayout
         android:id="@+id/splash_view"
         android:visibility="gone"
-        android:background="@color/lbryGreen"
+        android:background="@drawable/cinema_startup_background"
         android:clickable="true"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -128,20 +165,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true">
+            <ImageView
+                android:layout_gravity="center_horizontal"
+                android:layout_width="156dp" android:layout_height="156dp"
+                android:src="@mipmap/ic_launcher_foreground"
+                android:importantForAccessibility="no" />
             <TextView
                 android:layout_gravity="center_horizontal"
-                android:textColor="@color/white"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/app_name"
-                android:fontFamily="@font/inter"
-                android:textSize="56sp"
-                android:textStyle="bold" />
-            <ProgressBar
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingStart="24dp" android:paddingEnd="24dp"
+                android:text="@string/app_name" android:textColor="@color/white"
+                android:textAlignment="center" android:fontFamily="@font/inter"
+                android:textSize="26sp" android:textStyle="bold" />
+            <TextView
                 android:layout_gravity="center_horizontal"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_marginTop="48dp" />
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="40dp"
+                android:paddingStart="32dp" android:paddingEnd="32dp"
+                android:text="@string/cinema_startup_message"
+                android:textColor="@color/white" android:textAlignment="center"
+                android:fontFamily="@font/inter" android:textSize="32sp"
+                android:lineSpacingExtra="2dp" android:textStyle="bold" />
+            <ProgressBar
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="180dp" android:layout_height="4dp"
+                android:layout_marginTop="64dp"
+                android:indeterminate="true"
+                android:indeterminateTint="#00D6AE"
+                android:progressBackgroundTint="#3B5152" />
         </LinearLayout>
         <LinearLayout
             android:id="@+id/splash_view_error_container"

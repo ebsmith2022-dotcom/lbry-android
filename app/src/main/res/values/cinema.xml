@@ -7,4 +7,8 @@
     <string name="cinema_settings_help" tools:ignore="MissingTranslation">Settings &amp; help</string>
     <string name="cinema_open_search" tools:ignore="MissingTranslation">Search</string>
     <string name="cinema_close_search" tools:ignore="MissingTranslation">Close search</string>
+    <string name="cinema_startup_message" tools:ignore="MissingTranslation">The best is yet\nto come.</string>
+    <string name="cinema_account_menu" tools:ignore="MissingTranslation">Open account and menu</string>
+    <string name="cinema_create" tools:ignore="MissingTranslation">Create</string>
+    <string name="cinema_you" tools:ignore="MissingTranslation">You</string>
 </resources>
